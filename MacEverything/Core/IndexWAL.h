@@ -72,7 +72,7 @@ public:
 
     /// H-3: WAL file header constants for format identification and versioning
     static constexpr uint32_t kMagic   = 0x57414C31; // "WAL1"
-    static constexpr uint32_t kVersion = 1;
+    static constexpr uint32_t kVersion = 2;
 
 private:
     FILE* file_ = nullptr;
@@ -85,5 +85,5 @@ private:
     std::mutex mutex_;
 
     static bool writeRecord(FILE* f, const FileRecord& record);
-    static bool readRecord(FILE* f, FileRecord& record);
+    static bool readRecord(FILE* f, FileRecord& record, bool hasBirth);
 };

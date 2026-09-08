@@ -12,6 +12,7 @@ static constexpr char MAGIC[4] = {'M', 'E', 'I', 'D'};
 static constexpr uint32_t FORMAT_VERSION_V1 = 1;
 static constexpr uint32_t FORMAT_VERSION_V2 = 2;
 static constexpr uint32_t FORMAT_VERSION_V3 = 3;
+static constexpr uint32_t FORMAT_VERSION_V4 = 4;
 
 // --- Helper: write/read a length-prefixed string ---
 static bool writeString(FILE* f, const std::string& s) {
@@ -40,6 +41,8 @@ static bool writeRecord(FILE* f, const FileRecord& r, const std::string& resolve
     if (fwrite(&r.size, sizeof(uint64_t), 1, f) != 1) return false;
     int64_t mod = static_cast<int64_t>(r.modTime);
     if (fwrite(&mod, sizeof(int64_t), 1, f) != 1) return false;
+    int64_t birth = static_cast<int64_t>(r.birthTime);
+    if (fwrite(&birth, sizeof(int64_t), 1, f) != 1) return false;
     if (fwrite(&r.inode, sizeof(uint64_t), 1, f) != 1) return false;
     if (fwrite(&r.devId, sizeof(int32_t), 1, f) != 1) return false;
     return true;
@@ -54,6 +57,11 @@ static bool readRecordFromFile(FILE* f, FileRecord& r, uint32_t version) {
     int64_t mod;
     if (fread(&mod, sizeof(int64_t), 1, f) != 1) return false;
     r.modTime = static_cast<time_t>(mod);
+    if (version >= FORMAT_VERSION_V4) {
+        int64_t birth;
+        if (fread(&birth, sizeof(int64_t), 1, f) != 1) return false;
+        r.birthTime = static_cast<time_t>(birth);
+    }
     if (version >= FORMAT_VERSION_V2) {
         if (fread(&r.inode, sizeof(uint64_t), 1, f) != 1) return false;
         if (fread(&r.devId, sizeof(int32_t), 1, f) != 1) return false;
@@ -80,7 +88,7 @@ bool SearchEngine::saveToFile(const std::string& filePath, const IndexMetadata& 
 
     // Header: MAGIC(4) + version(4) + timestamp(8) + lastEventId(8)
     safeWrite(MAGIC, 1, 4);
-    uint32_t version = FORMAT_VERSION_V3;
+    uint32_t version = FORMAT_VERSION_V4;
     safeWrite(&version, sizeof(uint32_t), 1);
     int64_t ts = metadata.timestamp > 0 ? metadata.timestamp : static_cast<int64_t>(time(nullptr));
     safeWrite(&ts, sizeof(int64_t), 1);
@@ -158,7 +166,7 @@ bool SearchEngine::loadFromFile(const std::string& filePath, IndexMetadata* outM
 
     uint32_t version;
     if (fread(&version, sizeof(uint32_t), 1, f) != 1) { fclose(f); return false; }
-    if (version < FORMAT_VERSION_V1 || version > FORMAT_VERSION_V3) {
+    if (version < FORMAT_VERSION_V1 || version > FORMAT_VERSION_V4) {
         fclose(f);
         return false;
     }

@@ -16,6 +16,7 @@ void SearchEngine::loadRecordsV6(StringPool&& origNamePool,
                                   std::vector<uint8_t>&& types,
                                   std::vector<uint64_t>&& sizes,
                                   std::vector<int64_t>&& modTimes,
+                                  std::vector<int64_t>&& birthTimes,
                                   std::vector<uint64_t>&& inodes,
                                   std::vector<int32_t>&& devIds) {
     std::unique_lock lock(mutex_);
@@ -31,6 +32,7 @@ void SearchEngine::loadRecordsV6(StringPool&& origNamePool,
     types_ = std::move(types);
     sizes_ = std::move(sizes);
     modTimes_ = std::move(modTimes);
+    birthTimes_ = std::move(birthTimes);
     inodes_ = std::move(inodes);
     devIds_ = std::move(devIds);
 
@@ -199,6 +201,7 @@ SearchEngine::V6Snapshot SearchEngine::snapshotForV6() const {
     snap.types = types_;
     snap.sizes = sizes_;
     snap.modTimes = modTimes_;
+    snap.birthTimes = birthTimes_;
     snap.inodes = inodes_;
     snap.devIds = devIds_;
     snap.liveCount = liveCount_.load(std::memory_order_relaxed);

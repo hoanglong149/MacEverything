@@ -57,6 +57,7 @@ void ServiceEngine::applyFSEvents(
             record.type = type;
             record.size = S_ISREG(st.st_mode) ? static_cast<uint64_t>(st.st_size) : 0;
             record.modTime = st.st_mtime;
+            record.birthTime = st.st_birthtime;
             record.inode = st.st_ino;
             record.devId = static_cast<int32_t>(st.st_dev);
 
@@ -152,6 +153,7 @@ void ServiceEngine::startMonitoring() {
                 record.type = type;
                 record.size = S_ISREG(st.st_mode) ? static_cast<uint64_t>(st.st_size) : 0;
                 record.modTime = st.st_mtime;
+                record.birthTime = st.st_birthtime;
                 record.inode = st.st_ino;
                 record.devId = static_cast<int32_t>(st.st_dev);
 

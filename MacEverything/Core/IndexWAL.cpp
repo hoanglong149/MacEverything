@@ -156,6 +156,8 @@ bool IndexWAL::append(WALOp op, const std::string& fullPath, const FileRecord& r
         buf.append(reinterpret_cast<const char*>(&record.size), sizeof(uint64_t));
         int64_t mod = static_cast<int64_t>(record.modTime);
         buf.append(reinterpret_cast<const char*>(&mod), sizeof(int64_t));
+        int64_t birth = static_cast<int64_t>(record.birthTime);
+        buf.append(reinterpret_cast<const char*>(&birth), sizeof(int64_t));
         buf.append(reinterpret_cast<const char*>(&record.inode), sizeof(uint64_t));
         buf.append(reinterpret_cast<const char*>(&record.devId), sizeof(int32_t));
     }
@@ -191,10 +193,12 @@ std::vector<WALEntry> IndexWAL::readAll(const std::string& walPath) {
     uint32_t magic = 0, version = 0;
     if (fread(&magic, sizeof(uint32_t), 1, f) != 1 ||
         fread(&version, sizeof(uint32_t), 1, f) != 1 ||
-        magic != kMagic || version != kVersion) {
+        magic != kMagic || (version != kVersion && version != 1)) {
         // Legacy WAL without header — try reading from the beginning
         fseek(f, 0, SEEK_SET);
+        version = 1;
     }
+    const bool hasBirth = (version == kVersion);
 
     while (true) {
         // Record the start position to re-read the raw bytes for CRC verification
@@ -215,7 +219,7 @@ std::vector<WALEntry> IndexWAL::readAll(const std::string& walPath) {
         if (pathLen > 0 && fread(entry.fullPath.data(), 1, pathLen, f) != pathLen) break;
 
         if (entry.op == WALOp::Add || entry.op == WALOp::Update) {
-            if (!readRecord(f, entry.record)) break;
+            if (!readRecord(f, entry.record, hasBirth)) break;
         }
 
         // Read and verify CRC32
@@ -303,7 +307,7 @@ bool IndexWAL::writeRecord(FILE* f, const FileRecord& r) {
     return true;
 }
 
-bool IndexWAL::readRecord(FILE* f, FileRecord& r) {
+bool IndexWAL::readRecord(FILE* f, FileRecord& r, bool hasBirth) {
     uint32_t nameLen;
     if (fread(&nameLen, sizeof(uint32_t), 1, f) != 1) return false;
     if (nameLen > 65536) return false;
@@ -321,6 +325,11 @@ bool IndexWAL::readRecord(FILE* f, FileRecord& r) {
     int64_t mod;
     if (fread(&mod, sizeof(int64_t), 1, f) != 1) return false;
     r.modTime = static_cast<time_t>(mod);
+    if (hasBirth) {
+        int64_t birth;
+        if (fread(&birth, sizeof(int64_t), 1, f) != 1) return false;
+        r.birthTime = static_cast<time_t>(birth);
+    }
     if (fread(&r.inode, sizeof(uint64_t), 1, f) != 1) return false;
     if (fread(&r.devId, sizeof(int32_t), 1, f) != 1) return false;
 

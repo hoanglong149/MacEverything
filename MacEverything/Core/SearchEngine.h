@@ -124,6 +124,7 @@ public:
                        std::vector<uint8_t>&& types,
                        std::vector<uint64_t>&& sizes,
                        std::vector<int64_t>&& modTimes,
+                       std::vector<int64_t>&& birthTimes,
                        std::vector<uint64_t>&& inodes,
                        std::vector<int32_t>&& devIds);
 
@@ -144,11 +145,15 @@ public:
         std::vector<uint8_t> types;
         std::vector<uint64_t> sizes;
         std::vector<int64_t> modTimes;
+        std::vector<int64_t> birthTimes;
         std::vector<uint64_t> inodes;
         std::vector<int32_t> devIds;
         uint32_t liveCount;
     };
     V6Snapshot snapshotForV6() const;
+
+/// Result ordering for search. Rank = relevance default (priority, path length).
+enum class SortOrder { Rank, MtimeDesc, MtimeAsc, BirthDesc, BirthAsc, NameAsc };
 
     /// Case-insensitive substring search. Returns indices into the records array.
     /// If maxResults > 0, stops early once enough matches are found.
@@ -156,13 +161,15 @@ public:
     /// scope: optional case-insensitive full-path prefix ("" = whole index).
     std::vector<uint32_t> query(const std::string& keyword, uint32_t maxResults = 0,
                                 bool useTrigram = true, uint64_t sessionId = 0,
-                                const std::string& scope = "") const;
+                                const std::string& scope = "",
+                                SortOrder sort = SortOrder::Rank) const;
 
     /// Same as query() but also populates timing breakdown.
     std::vector<uint32_t> query(const std::string& keyword, uint32_t maxResults,
                                 bool useTrigram, QueryTimingInfo& timing,
                                 uint64_t sessionId = 0,
-                                const std::string& scope = "") const;
+                                const std::string& scope = "",
+                                SortOrder sort = SortOrder::Rank) const;
 
     /// Prefix completions for typeahead: live names starting with prefix
     /// (case-insensitive), ranked by recency. scope filters like query().
@@ -176,7 +183,8 @@ public:
     std::vector<uint32_t> queryAdvanced(const std::string& input, uint32_t maxResults,
                                          bool useTrigram, QueryTimingInfo& timing,
                                          uint64_t myGen = 0,
-                                         const std::atomic<uint64_t>* genPtr = nullptr) const;
+                                         const std::atomic<uint64_t>* genPtr = nullptr,
+                                         SortOrder sort = SortOrder::Rank) const;
 
     /// Cancel in-flight queries for the given session. Lock-free on the generation atomic.
     void cancelSession(uint64_t sessionId) const;
@@ -306,6 +314,8 @@ public:
             rec.type = types_[idx];
             rec.size = sizes_[idx];
             rec.modTime = static_cast<time_t>(modTimes_[idx]);
+            rec.birthTime = birthTimes_[idx] ? static_cast<time_t>(birthTimes_[idx])
+                                             : static_cast<time_t>(modTimes_[idx]);
             rec.inode = inodes_[idx];
             rec.devId = devIds_[idx];
             func(idx, rec, path);
@@ -327,6 +337,8 @@ public:
             rec.type = types_[i];
             rec.size = sizes_[i];
             rec.modTime = static_cast<time_t>(modTimes_[i]);
+            rec.birthTime = birthTimes_[i] ? static_cast<time_t>(birthTimes_[i])
+                                           : static_cast<time_t>(modTimes_[i]);
             rec.inode = inodes_[i];
             rec.devId = devIds_[i];
             func(i, rec, path);
@@ -346,6 +358,8 @@ public:
             rec.type = types_[i];
             rec.size = sizes_[i];
             rec.modTime = static_cast<time_t>(modTimes_[i]);
+            rec.birthTime = birthTimes_[i] ? static_cast<time_t>(birthTimes_[i])
+                                           : static_cast<time_t>(modTimes_[i]);
             rec.inode = inodes_[i];
             rec.devId = devIds_[i];
             func(i, rec, pathIndices_[i],
@@ -388,6 +402,7 @@ private:
     std::vector<uint8_t>  types_;          // 1=file, 2=directory, 0=tombstone
     std::vector<uint64_t> sizes_;          // file size in bytes
     std::vector<int64_t>  modTimes_;       // modification time (Unix epoch)
+    std::vector<int64_t>  birthTimes_;       // creation time (0 = unknown → use modTime)
     std::vector<uint64_t> inodes_;         // inode number
     std::vector<int32_t>  devIds_;         // device ID
     std::unordered_map<std::string, uint32_t> pathLookup_; // path string -> pathPool_ index
@@ -454,7 +469,14 @@ private:
 
     /// Match result from search: (record index, priority, full path length).
     /// Priority: 0=exact, 1=starts-with, 2=contains, 3=path-only match.
-    struct Match { uint32_t idx; uint8_t priority; uint32_t pathLen; };
+    struct Match { uint32_t idx; uint8_t priority; uint32_t pathLen; int64_t modTime = 0; int64_t birthTime = 0; };
+    /// Order merged matches per sort (Rank default). nameKeys (parallel lowercase
+    /// names, empty = rank fallback) serves NameAsc without pool access.
+    /// Truncates to maxResults (0 = unlimited). Lock-free.
+    static void sortMatchIndices(const std::vector<Match>& merged, SortOrder sort,
+                                 uint32_t maxResults,
+                                 const std::vector<std::string>& nameKeys,
+                                 std::vector<uint32_t>& out);
 
     /// Node-centric structured query: name trigram → name verify → path constraint verify.
     /// Handles SEGMENTS and DIR_EXACT modes.

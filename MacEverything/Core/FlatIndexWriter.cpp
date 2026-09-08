@@ -279,12 +279,20 @@ bool FlatIndexWriter::fullRewrite(SearchEngine& engine, const IndexMetadata& met
         fillSection(9, kSectionDevIds, offset, size, crc);
     }
 
+    // Section 11: BIRTH_TIMES (optional for old readers: unknown IDs are skipped)
+    {
+        uint64_t offset = static_cast<uint64_t>(ftell(f));
+        uint32_t size, crc;
+        ok = ok && writeArraySection(f, snap.birthTimes, size, crc);
+        fillSection(10, kSectionBirthTimes, offset, size, crc);
+    }
+
     // Section 11: METADATA_KV
     {
         uint64_t offset = static_cast<uint64_t>(ftell(f));
         uint32_t size, crc;
         ok = ok && writeMetadataSection(f, meta, size, crc);
-        fillSection(10, kSectionMetadataKV, offset, size, crc);
+        fillSection(11, kSectionMetadataKV, offset, size, crc);
     }
 
     if (!ok) {
@@ -487,11 +495,16 @@ bool FlatIndexWriter::load(SearchEngine& engine, IndexMetadata* outMeta) {
     std::vector<int64_t> modTimes;
     std::vector<uint64_t> inodes;
     std::vector<int32_t> devIds;
+    std::vector<int64_t> birthTimes;
 
     if (!readArrayDirect(kSectionPathIndices, pathIndices, n, "PATH_INDICES")) { fclose(f); return false; }
     if (!readArrayDirect(kSectionTypes, types, n, "TYPES")) { fclose(f); return false; }
     if (!readArrayDirect(kSectionSizes, sizes, n, "SIZES")) { fclose(f); return false; }
     if (!readArrayDirect(kSectionModTimes, modTimes, n, "MOD_TIMES")) { fclose(f); return false; }
+    // BIRTH_TIMES is optional: pre-birthTime files fall back to modTimes.
+    if (!readArrayDirect(kSectionBirthTimes, birthTimes, n, "BIRTH_TIMES")) {
+        birthTimes = modTimes;
+    }
     if (!readArrayDirect(kSectionInodes, inodes, n, "INODES")) { fclose(f); return false; }
     if (!readArrayDirect(kSectionDevIds, devIds, n, "DEV_IDS")) { fclose(f); return false; }
 
@@ -522,6 +535,7 @@ bool FlatIndexWriter::load(SearchEngine& engine, IndexMetadata* outMeta) {
         std::move(types),
         std::move(sizes),
         std::move(modTimes),
+        std::move(birthTimes),
         std::move(inodes),
         std::move(devIds)
     );

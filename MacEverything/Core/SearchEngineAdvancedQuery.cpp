@@ -583,7 +583,8 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                                                    bool useTrigram,
                                                    QueryTimingInfo& timing,
                                                    uint64_t myGen,
-                                                   const std::atomic<uint64_t>* genPtr) const {
+                                                   const std::atomic<uint64_t>* genPtr,
+                                                   SortOrder sort) const {
     // If no external generation pointer, create a local dummy (no cancellation)
     std::atomic<uint64_t> dummyGen{myGen};
     if (!genPtr) genPtr = &dummyGen;
@@ -790,6 +791,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
             const auto* typesPtr = types_.data();
             const auto* sizesPtr = sizes_.data();
             const auto* modTimesPtr = modTimes_.data();
+            const auto* birthTimesPtr = birthTimes_.data();
             const auto& namePool = namePool_;
             const auto& origNamePool = origNamePool_;
             const auto& lowerPathPool = lowerPathPool_;
@@ -838,7 +840,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                             priority = 3;
                         }
                     }
-                    local.push_back({idx, priority, static_cast<uint32_t>(pl + 1 + nl)});
+                    local.push_back({idx, priority, static_cast<uint32_t>(pl + 1 + nl), modTimesPtr[idx], birthTimesPtr[idx]});
                 }
             });
 
@@ -882,7 +884,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                         priority = 3;
                     }
                 }
-                merged.push_back({idx, priority, static_cast<uint32_t>(pl + 1 + nl)});
+                merged.push_back({idx, priority, static_cast<uint32_t>(pl + 1 + nl), modTimes_[idx], birthTimes_[idx]});
             }
         }
     } else {
@@ -904,6 +906,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
         const auto* typesPtr = types_.data();
         const auto* sizesPtr = sizes_.data();
         const auto* modTimesPtr = modTimes_.data();
+        const auto* birthTimesPtr = birthTimes_.data();
         const auto& namePool = namePool_;
         const auto& origNamePool = origNamePool_;
         const auto& lowerPathPool = lowerPathPool_;
@@ -938,7 +941,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                                   static_cast<time_t>(modTimesPtr[idx]),
                                   nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0,
                                   localPathBuf, regCache)) continue;
-                    local.push_back({static_cast<uint32_t>(idx), 2, 0});
+                    local.push_back({static_cast<uint32_t>(idx), 2, 0, modTimesPtr[idx], birthTimesPtr[idx]});
                 }
 
                 // SIMD main loop: 16 records per iteration
@@ -955,7 +958,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                                      static_cast<time_t>(modTimesPtr[ri]),
                                      nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0,
                                      localPathBuf, regCache)) {
-                            local.push_back({static_cast<uint32_t>(ri), 2, 0});
+                            local.push_back({static_cast<uint32_t>(ri), 2, 0, modTimesPtr[ri], birthTimesPtr[ri]});
                         }
                         liveMask &= liveMask - 1;
                     }
@@ -968,7 +971,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                                   static_cast<time_t>(modTimesPtr[idx]),
                                   nullptr, 0, nullptr, 0, nullptr, 0, nullptr, 0,
                                   localPathBuf, regCache)) continue;
-                    local.push_back({static_cast<uint32_t>(idx), 2, 0});
+                    local.push_back({static_cast<uint32_t>(idx), 2, 0, modTimesPtr[idx], birthTimesPtr[idx]});
                 }
             } else {
                 // ── Full evaluation path (needs string access) ──
@@ -1000,7 +1003,7 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
                         }
                     }
                     uint32_t pLen = static_cast<uint32_t>(pl + 1 + nl);
-                    local.push_back({static_cast<uint32_t>(idx), priority, pLen});
+                    local.push_back({static_cast<uint32_t>(idx), priority, pLen, modTimesPtr[idx], birthTimesPtr[idx]});
                 }
             }
         });
@@ -1016,33 +1019,23 @@ std::vector<uint32_t> SearchEngine::queryAdvanced(const std::string& input,
 
     auto afterPhase = std::chrono::steady_clock::now();
 
-    // Release lock before sorting
+    // Release lock before sorting (snapshot lowercase names first for NameAsc)
+    std::vector<std::string> nameKeys;
+    if (sort == SortOrder::NameAsc) {
+        nameKeys.reserve(merged.size());
+        for (const auto& m : merged) {
+            const char* d = namePool_.data(m.idx);
+            size_t l = namePool_.length(m.idx);
+            nameKeys.emplace_back(d ? std::string(d, l) : std::string());
+        }
+    }
     auto beforeUnlock = std::chrono::steady_clock::now();
     lock.unlock();
 
-    // Sort by priority, then path length
     auto beforeSort = std::chrono::steady_clock::now();
-    auto cmp = [](const Match& a, const Match& b) {
-        if (a.priority != b.priority) return a.priority < b.priority;
-        return a.pathLen < b.pathLen;
-    };
-
-    size_t resultCount = merged.size();
-    if (maxResults > 0 && resultCount > maxResults) resultCount = maxResults;
-
-    if (resultCount < merged.size()) {
-        std::partial_sort(merged.begin(), merged.begin() + resultCount, merged.end(), cmp);
-    } else {
-        std::sort(merged.begin(), merged.end(), cmp);
-    }
-    auto afterSort = std::chrono::steady_clock::now();
-
     std::vector<uint32_t> result;
-    result.reserve(resultCount);
-    for (size_t i = 0; i < resultCount; i++) {
-        result.push_back(merged[i].idx);
-    }
-
+    sortMatchIndices(merged, sort, maxResults, nameKeys, result);
+    auto afterSort = std::chrono::steady_clock::now();
     // Populate timing
     auto toMs = [](auto dur) { return std::chrono::duration<double, std::milli>(dur).count(); };
     timing.totalMs = toMs(std::chrono::steady_clock::now() - queryStart);

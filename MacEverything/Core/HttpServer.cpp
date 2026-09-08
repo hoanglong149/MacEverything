@@ -344,6 +344,15 @@ std::string HttpServer::route(const HttpRequest& req) {
 // Endpoint handlers
 // ---------------------------------------------------------------------------
 
+static SearchEngine::SortOrder parseSortOrder(const std::string& s) {
+    if (s == "mtime_desc") return SearchEngine::SortOrder::MtimeDesc;
+    if (s == "mtime_asc") return SearchEngine::SortOrder::MtimeAsc;
+    if (s == "birth_desc") return SearchEngine::SortOrder::BirthDesc;
+    if (s == "birth_asc") return SearchEngine::SortOrder::BirthAsc;
+    if (s == "name_asc") return SearchEngine::SortOrder::NameAsc;
+    return SearchEngine::SortOrder::Rank;
+}
+
 std::string HttpServer::handleSearch(
         const std::unordered_map<std::string, std::string>& params) {
     auto qIt = params.find("q");
@@ -364,6 +373,10 @@ std::string HttpServer::handleSearch(
     auto sIt = params.find("scope");
     if (sIt != params.end()) scope = sIt->second;
 
+    SearchEngine::SortOrder sort = SearchEngine::SortOrder::Rank;
+    auto oIt = params.find("sort");
+    if (oIt != params.end()) sort = parseSortOrder(oIt->second);
+
     bool useTrigram = true;
     auto tIt = params.find("trigram");
     if (tIt != params.end() && tIt->second == "0") {
@@ -375,7 +388,7 @@ std::string HttpServer::handleSearch(
 
     auto start = std::chrono::steady_clock::now();
     QueryTimingInfo timing;
-    auto indices = engine->query(keyword, limit, useTrigram, timing, 0, scope);
+    auto indices = engine->query(keyword, limit, useTrigram, timing, 0, scope, sort);
 
     std::ostringstream json;
     json << "{\"results\":[";
@@ -391,6 +404,7 @@ std::string HttpServer::handleSearch(
                  << ",\"type\":" << static_cast<int>(r.type)
                  << ",\"size\":" << r.size
                  << ",\"modTime\":" << r.modTime
+                 << ",\"birthTime\":" << r.birthTime
                  << "}";
         });
 
@@ -462,6 +476,7 @@ std::string HttpServer::handleSuggest(
                  << ",\"type\":" << static_cast<int>(r.type)
                  << ",\"size\":" << r.size
                  << ",\"modTime\":" << r.modTime
+                 << ",\"birthTime\":" << r.birthTime
                  << "}";
         });
     json << std::fixed << std::setprecision(2);
@@ -552,6 +567,7 @@ std::string HttpServer::handleRecent(
                  << ",\"type\":" << static_cast<int>(r.type)
                  << ",\"size\":" << r.size
                  << ",\"modTime\":" << r.modTime
+                 << ",\"birthTime\":" << r.birthTime
                  << "}";
         });
 

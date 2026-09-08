@@ -48,7 +48,8 @@ public:
     static constexpr uint32_t kSectionInodes         = 9;
     static constexpr uint32_t kSectionDevIds         = 10;
     static constexpr uint32_t kSectionMetadataKV     = 11;
-    static constexpr uint32_t kSectionCount          = 11;
+    static constexpr uint32_t kSectionBirthTimes     = 12;
+    static constexpr uint32_t kSectionCount          = 12;
 
 private:
     std::string path_;

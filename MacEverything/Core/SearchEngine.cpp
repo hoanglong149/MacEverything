@@ -39,6 +39,7 @@ void SearchEngine::tombstoneAt(uint32_t idx) {
     markPageDirty(idx);
     sizes_[idx] = 0;
     modTimes_[idx] = 0;
+    birthTimes_[idx] = 0;
     if (idx < inodes_.size()) inodes_[idx] = 0;
     if (idx < devIds_.size()) devIds_[idx] = 0;
     namePool_.tombstone(idx);
@@ -49,6 +50,7 @@ void SearchEngine::pushRecord(FileRecord&& rec) {
     types_.push_back(rec.type);
     sizes_.push_back(rec.size);
     modTimes_.push_back(static_cast<int64_t>(rec.modTime));
+    birthTimes_.push_back(static_cast<int64_t>(rec.birthTime));
     inodes_.push_back(rec.inode);
     devIds_.push_back(rec.devId);
 }
@@ -62,12 +64,14 @@ void SearchEngine::loadRecords(std::vector<FileRecord>&& records) {
     types_.resize(n);
     sizes_.resize(n);
     modTimes_.resize(n);
+    birthTimes_.resize(n);
     inodes_.resize(n);
     devIds_.resize(n);
     for (size_t i = 0; i < n; i++) {
         types_[i] = records[i].type;
         sizes_[i] = records[i].size;
         modTimes_[i] = static_cast<int64_t>(records[i].modTime);
+        birthTimes_[i] = static_cast<int64_t>(records[i].birthTime);
         inodes_[i] = records[i].inode;
         devIds_[i] = records[i].devId;
     }
@@ -191,12 +195,14 @@ void SearchEngine::loadRecordsV5(std::vector<FileRecord>&& records,
     types_.resize(n);
     sizes_.resize(n);
     modTimes_.resize(n);
+    birthTimes_.resize(n);
     inodes_.resize(n);
     devIds_.resize(n);
     for (size_t i = 0; i < n; i++) {
         types_[i] = records[i].type;
         sizes_[i] = records[i].size;
         modTimes_[i] = static_cast<int64_t>(records[i].modTime);
+        birthTimes_[i] = static_cast<int64_t>(records[i].birthTime);
         inodes_[i] = records[i].inode;
         devIds_[i] = records[i].devId;
     }
@@ -565,6 +571,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
     std::vector<uint8_t> snapTypes;
     std::vector<uint64_t> snapSizes;
     std::vector<int64_t> snapModTimes;
+    std::vector<int64_t> snapBirthTimes;
     std::vector<uint64_t> snapInodes;
     std::vector<int32_t> snapDevIds;
     StringPool snapNamePool;
@@ -580,6 +587,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
         snapTypes = types_;
         snapSizes = sizes_;
         snapModTimes = modTimes_;
+        snapBirthTimes = birthTimes_;
         snapInodes = inodes_;
         snapDevIds = devIds_;
         snapNamePool = namePool_;
@@ -602,9 +610,11 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
     std::vector<uint8_t> cdTypes;
     std::vector<uint64_t> cdSizes;
     std::vector<int64_t> cdModTimes;
+    std::vector<int64_t> cdBirthTimes;
     std::vector<uint64_t> cdInodes;
     std::vector<int32_t> cdDevIds;
     cdTypes.reserve(snapSize);
+    cdBirthTimes.reserve(snapSize);
     cdSizes.reserve(snapSize);
     cdModTimes.reserve(snapSize);
     cdInodes.reserve(snapSize);
@@ -649,6 +659,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
         cdTypes.push_back(snapTypes[i]);
         cdSizes.push_back(snapSizes[i]);
         cdModTimes.push_back(snapModTimes[i]);
+        cdBirthTimes.push_back(snapBirthTimes[i]);
         cdInodes.push_back(snapInodes[i]);
         cdDevIds.push_back(snapDevIds[i]);
     }
@@ -674,6 +685,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
         auto oldTypes = std::move(types_);
         auto oldSizes = std::move(sizes_);
         auto oldModTimes = std::move(modTimes_);
+        auto oldBirthTimes = std::move(birthTimes_);
         auto oldInodes = std::move(inodes_);
         auto oldDevIds = std::move(devIds_);
         auto oldOrigNamePool = std::move(origNamePool_);
@@ -688,6 +700,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
         types_ = std::move(cdTypes);
         sizes_ = std::move(cdSizes);
         modTimes_ = std::move(cdModTimes);
+        birthTimes_ = std::move(cdBirthTimes);
         inodes_ = std::move(cdInodes);
         devIds_ = std::move(cdDevIds);
         origNamePool_ = std::move(cdOrigNamePool);
@@ -727,6 +740,7 @@ std::unordered_map<uint32_t, uint32_t> SearchEngine::compactRecords() {
             types_.push_back(oldTypes[i]);
             sizes_.push_back(oldSizes[i]);
             modTimes_.push_back(oldModTimes[i]);
+            birthTimes_.push_back(oldBirthTimes[i]);
             inodes_.push_back(oldInodes[i]);
             devIds_.push_back(oldDevIds[i]);
             addPathTrigramsForRecord(newIdx);
@@ -953,4 +967,60 @@ void SearchEngine::replayWALEntries(std::vector<WALEntry>&& entries) {
     }
 
     rebuildRecentCache();
+}
+// ---------------------------------------------------------------------------
+// Shared result ordering
+// ---------------------------------------------------------------------------
+
+void SearchEngine::sortMatchIndices(const std::vector<Match>& merged, SortOrder sort,
+                                    uint32_t maxResults,
+                                    const std::vector<std::string>& nameKeys,
+                                    std::vector<uint32_t>& out) {
+    out.clear();
+    size_t resultCount = merged.size();
+    if (maxResults > 0 && resultCount > maxResults) resultCount = maxResults;
+    out.reserve(resultCount);
+    if (resultCount == 0) return;
+
+    auto effBirth = [](const Match& m) -> int64_t {
+        return m.birthTime != 0 ? m.birthTime : m.modTime;
+    };
+
+    if (sort == SortOrder::NameAsc && nameKeys.size() == merged.size()) {
+        std::vector<uint32_t> order(merged.size());
+        for (uint32_t i = 0; i < order.size(); i++) order[i] = i;
+        auto ncmp = [&](uint32_t a, uint32_t b) {
+            if (nameKeys[a] != nameKeys[b]) return nameKeys[a] < nameKeys[b];
+            return merged[a].idx < merged[b].idx;
+        };
+        if (resultCount < order.size()) {
+            std::partial_sort(order.begin(), order.begin() + resultCount, order.end(), ncmp);
+        } else {
+            std::sort(order.begin(), order.end(), ncmp);
+        }
+        for (size_t i = 0; i < resultCount; i++) out.push_back(merged[order[i]].idx);
+        return;
+    }
+
+    // Value-based orders work on a mutable copy (partial_sort mutates).
+    std::vector<Match> tmp = merged;
+    auto cmp = [&](const Match& a, const Match& b) {
+        switch (sort) {
+            case SortOrder::MtimeDesc: return a.modTime > b.modTime;
+            case SortOrder::MtimeAsc: return a.modTime < b.modTime;
+            case SortOrder::BirthDesc: return effBirth(a) > effBirth(b);
+            case SortOrder::BirthAsc: return effBirth(a) < effBirth(b);
+            case SortOrder::NameAsc: break;  // keys missing → rank fallback
+            case SortOrder::Rank:
+            default: break;
+        }
+        if (a.priority != b.priority) return a.priority < b.priority;
+        return a.pathLen < b.pathLen;
+    };
+    if (resultCount < tmp.size()) {
+        std::partial_sort(tmp.begin(), tmp.begin() + resultCount, tmp.end(), cmp);
+    } else {
+        std::sort(tmp.begin(), tmp.end(), cmp);
+    }
+    for (size_t i = 0; i < resultCount; i++) out.push_back(tmp[i].idx);
 }

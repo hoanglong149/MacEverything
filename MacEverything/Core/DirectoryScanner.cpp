@@ -151,6 +151,7 @@ void DirectoryScanner::scanDirectory(const std::string& dirPath, char* buffer, i
                         | ATTR_CMN_DEVID
                         | ATTR_CMN_OBJTYPE
                         | ATTR_CMN_MODTIME
+                        | ATTR_CMN_CRTIME
                         | ATTR_CMN_FILEID;
     attrList.fileattr = ATTR_FILE_DATALENGTH;
 
@@ -216,6 +217,13 @@ void DirectoryScanner::scanDirectory(const std::string& dirPath, char* buffer, i
             if (returned.commonattr & ATTR_CMN_OBJTYPE) {
                 memcpy(&objtype, field, sizeof(fsobj_type_t));
                 field += sizeof(fsobj_type_t);
+            }
+
+            // 6b. Creation time (ATTR_CMN_CRTIME = 0x200, before MODTIME in numeric order)
+            struct timespec crtime = {};
+            if (returned.commonattr & ATTR_CMN_CRTIME) {
+                memcpy(&crtime, field, sizeof(struct timespec));
+                field += sizeof(struct timespec);
             }
 
             // 7. Modification time (ATTR_CMN_MODTIME = 0x400)
@@ -285,17 +293,17 @@ void DirectoryScanner::scanDirectory(const std::string& dirPath, char* buffer, i
                     stats_.dirCount.fetch_add(1, std::memory_order_relaxed);
                     threadResults_[threadIndex].push_back({name, dirPath,
                         static_cast<uint8_t>(isAppBundle ? 5 : 2),
-                        0, modtime.tv_sec, fileid, static_cast<int32_t>(devid)});
+                        0, modtime.tv_sec, fileid, static_cast<int32_t>(devid), crtime.tv_sec});
                 }
             } else if (objtype == VREG) {
                 stats_.fileCount.fetch_add(1, std::memory_order_relaxed);
-                threadResults_[threadIndex].push_back({name, dirPath, 1, static_cast<uint64_t>(datalength), modtime.tv_sec, fileid, static_cast<int32_t>(devid)});
+                threadResults_[threadIndex].push_back({name, dirPath, 1, static_cast<uint64_t>(datalength), modtime.tv_sec, fileid, static_cast<int32_t>(devid), crtime.tv_sec});
             } else if (objtype == VLNK) {
                 stats_.symlinkCount.fetch_add(1, std::memory_order_relaxed);
-                threadResults_[threadIndex].push_back({name, dirPath, 3, 0, modtime.tv_sec, fileid, static_cast<int32_t>(devid)});
+                threadResults_[threadIndex].push_back({name, dirPath, 3, 0, modtime.tv_sec, fileid, static_cast<int32_t>(devid), crtime.tv_sec});
             } else {
                 stats_.otherCount.fetch_add(1, std::memory_order_relaxed);
-                threadResults_[threadIndex].push_back({name, dirPath, 4, 0, modtime.tv_sec, fileid, static_cast<int32_t>(devid)});
+                threadResults_[threadIndex].push_back({name, dirPath, 4, 0, modtime.tv_sec, fileid, static_cast<int32_t>(devid), crtime.tv_sec});
             }
 
             entry = nextEntry;

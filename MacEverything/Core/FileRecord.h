@@ -11,4 +11,5 @@ struct FileRecord {
     time_t      modTime;    // last modification time (seconds since epoch)
     uint64_t    inode = 0;  // ATTR_CMN_FILEID (inode number)
     int32_t     devId = 0;  // ATTR_CMN_DEVID (device ID)
+    time_t      birthTime = 0; // creation time (0 = unknown, fall back to modTime)
 };

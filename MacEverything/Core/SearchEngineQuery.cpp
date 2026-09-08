@@ -133,7 +133,7 @@ void SearchEngine::queryDirList(const ParsedQuery& pq,
             uint16_t nl = namePool_.length(childIdx);
             uint8_t priority = 2; // children are all "contains" priority
             uint32_t pLen = static_cast<uint32_t>(pathPool_.length(pathIndices_[childIdx]) + 1 + nl);
-            merged.push_back({childIdx, priority, pLen});
+            merged.push_back({childIdx, priority, pLen, modTimes_[childIdx], birthTimes_[childIdx]});
         }
     }
 }
@@ -180,15 +180,17 @@ static PreprocessedQuery preprocessQuery(const std::string& raw) {
 
 std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t maxResults,
                                           bool useTrigram, uint64_t sessionId,
-                                          const std::string& scope) const {
+                                          const std::string& scope,
+                                          SortOrder sort) const {
     QueryTimingInfo unused;
-    return query(keyword, maxResults, useTrigram, unused, sessionId, scope);
+    return query(keyword, maxResults, useTrigram, unused, sessionId, scope, sort);
 }
 
 std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t maxResults,
                                           bool useTrigram, QueryTimingInfo& timing,
                                           uint64_t sessionId,
-                                          const std::string& scope) const {
+                                          const std::string& scope,
+                                          SortOrder sort) const {
     // Acquire per-session generation so only same-session queries cancel each other.
     auto [genAtom, myGen] = acquireSessionGeneration(sessionId);
 
@@ -217,29 +219,24 @@ std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t m
 
         if (genAtom->load(std::memory_order_relaxed) != myGen) return {};
 
+        // Snapshot lowercase names for NameAsc before releasing the lock.
+        std::vector<std::string> nameKeys;
+        if (sort == SortOrder::NameAsc) {
+            nameKeys.reserve(merged.size());
+            for (const auto& m : merged) {
+                const char* d = namePool_.data(m.idx);
+                size_t l = namePool_.length(m.idx);
+                nameKeys.emplace_back(d ? std::string(d, l) : std::string());
+            }
+        }
         auto beforeUnlock = std::chrono::steady_clock::now();
         lock.unlock();
 
-        // Sort by priority then path length
         auto beforeSort = std::chrono::steady_clock::now();
-        auto cmp = [](const Match& a, const Match& b) {
-            if (a.priority != b.priority) return a.priority < b.priority;
-            return a.pathLen < b.pathLen;
-        };
-        size_t resultCount = merged.size();
-        if (innerLimit > 0 && resultCount > innerLimit) resultCount = innerLimit;
-        if (resultCount < merged.size()) {
-            std::partial_sort(merged.begin(), merged.begin() + resultCount, merged.end(), cmp);
-        } else {
-            std::sort(merged.begin(), merged.end(), cmp);
-        }
-        auto afterSort = std::chrono::steady_clock::now();
-
         std::vector<uint32_t> result;
-        result.reserve(resultCount);
-        for (size_t i = 0; i < resultCount; i++) {
-            result.push_back(merged[i].idx);
-        }
+        // DIR_LIST ignores scope (already directory-scoped): truncate to maxResults.
+        sortMatchIndices(merged, sort, maxResults, nameKeys, result);
+        auto afterSort = std::chrono::steady_clock::now();
 
         // Populate timing
         auto toMs = [](auto dur) { return std::chrono::duration<double, std::milli>(dur).count(); };
@@ -254,7 +251,7 @@ std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t m
     }
 
     // All non-DIR_LIST queries go through the unified Advanced path
-    auto result = queryAdvanced(pq.original, innerLimit, useTrigram, timing, myGen, genAtom.get());
+    auto result = queryAdvanced(pq.original, innerLimit, useTrigram, timing, myGen, genAtom.get(), sort);
     if (scope.empty() || result.empty()) return result;
     return filterByScope(result, me::toLower(scope), maxResults);
 }

@@ -37,7 +37,7 @@ static void runIndexMetadataTests() {
         IndexMetadata loadedMeta;
         bool loaded = engine.loadFromFile(tmpFile, &loadedMeta);
         check(loaded, "v3 loadFromFile succeeded");
-        check(loadedMeta.formatVersion == 3, "v3: formatVersion == 3");
+        check(loadedMeta.formatVersion == 4, "v4: formatVersion == 4");
         check(loadedMeta.lastEventId == 42, "v3: lastEventId == 42");
         check(loadedMeta.timestamp > 0, "v3: timestamp > 0");
         check(engine.liveRecordCount() == 3, "v3: 3 live records");
@@ -99,7 +99,7 @@ static void runIndexMetadataTests() {
         IndexMetadata loadedMeta;
         bool loaded = engine.loadFromFile(tmpFile, &loadedMeta);
         check(loaded, "Empty metadata load succeeded");
-        check(loadedMeta.formatVersion == 3, "Empty metadata: formatVersion == 3");
+        check(loadedMeta.formatVersion == 4, "Empty metadata: formatVersion == 4");
         check(loadedMeta.extra.empty(), "Empty metadata: no extra keys");
     }
 

@@ -181,7 +181,7 @@ static void testV6CRCCorruption() {
     check(writer.fullRewrite(*engine, meta), "V6-3: write for CRC test");
 
     // Corrupt 1 byte in a section body (past header + section table)
-    // Header = 64 bytes, section table = 11 * 24 = 264 bytes, data starts at 328
+    // Header = 64 bytes, section table = 12 * 24 = 288 bytes, data starts at 352
     {
         auto fileSize = fs::file_size(v6Path);
         check(fileSize > 400, "V6-3: file large enough for corruption test");
@@ -189,7 +189,7 @@ static void testV6CRCCorruption() {
         check(f != nullptr, "V6-3: open v6 file for tampering");
         if (f) {
             // Corrupt a byte in the first section data area
-            fseek(f, 350, SEEK_SET);
+            fseek(f, 360, SEEK_SET);
             uint8_t garbage = 0xFF;
             fwrite(&garbage, 1, 1, f);
             fclose(f);

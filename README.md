@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <b>中文</b> | <a href="README_EN.md">English</a>
+  <b>中文</b> | <a href="README_EN.md">English</a> | <a href="README_VI.md">Tiếng Việt</a>
 </p>
 
 <p align="center">
   <a href="#安装"><img src="https://img.shields.io/badge/macOS-13%2B-blue?logo=apple" alt="macOS 13+" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
-  <a href="#测试体系"><img src="https://img.shields.io/badge/tests-79%20modules-brightgreen" alt="79 test modules" /></a>
+  <a href="#测试体系"><img src="https://img.shields.io/badge/tests-81%20modules-brightgreen" alt="81 test modules" /></a>
   <a href="#ai-工具集成-mcp"><img src="https://img.shields.io/badge/MCP-compatible-blueviolet" alt="MCP Compatible" /></a>
 </p>
 

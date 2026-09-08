@@ -10,13 +10,13 @@
 </p>
 
 <p align="center">
-  <a href="README.md">中文</a> | <b>English</b>
+  <a href="README.md">中文</a> | <b>English</b> | <a href="README_VI.md">Tiếng Việt</a>
 </p>
 
 <p align="center">
   <a href="#installation"><img src="https://img.shields.io/badge/macOS-13%2B-blue?logo=apple" alt="macOS 13+" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
-  <a href="#testing"><img src="https://img.shields.io/badge/tests-79%20modules-brightgreen" alt="79 test modules" /></a>
+  <a href="#testing"><img src="https://img.shields.io/badge/tests-81%20modules-brightgreen" alt="81 test modules" /></a>
   <a href="#ai-tool-integration-mcp"><img src="https://img.shields.io/badge/MCP-compatible-blueviolet" alt="MCP Compatible" /></a>
 </p>
 
@@ -270,7 +270,7 @@ Test environment: macOS Darwin 24.3.0, **5.4 million indexed files**, 48 query t
 
 ### Testing
 
-79 test modules covering the full stack, with AddressSanitizer and ThreadSanitizer support:
+81 test modules covering the full stack, with AddressSanitizer and ThreadSanitizer support:
 
 ```bash
 make test          # Fast unit tests + bridge lint
@@ -314,7 +314,7 @@ MacEverything/
 ├── CLI/                   # Command-line tools
 │   ├── daemon_main        # Headless daemon
 │   └── mcp_main           # MCP server (stdio JSON-RPC)
-└── tests/                 # 79 test modules
+└── tests/                 # 81 test modules
 ```
 
 ## Contributing

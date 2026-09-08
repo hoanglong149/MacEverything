@@ -1,3 +1,9 @@
+---
+date: 2026-09-08
+description: "README tiếng Việt cho MacEverything"
+tags: [maceverything, docs]
+---
+
 <p align="center">
   <img src="MacEverything/Assets.xcassets/AppIcon.appiconset/icon_256.png" alt="MacEverything" width="128" />
 </p>
@@ -5,19 +11,19 @@
 <h1 align="center">MacEverything</h1>
 
 <p align="center">
-  <b>macOS 极速文件搜索工具</b> — 在数百万文件中毫秒级定位任意文件。<br/>
-  灵感源自 Windows 上的 <a href="https://www.voidtools.com/">Everything</a>，Mac 上无出其右。
+  <b>Công cụ tìm file siêu tốc cho macOS</b> — định vị bất kỳ file nào trong hàng triệu file chỉ trong mili giây.<br/>
+  Lấy cảm hứng từ <a href="https://www.voidtools.com/">Everything</a> trên Windows, trên Mac không có đối thủ.
 </p>
 
 <p align="center">
-  <b>中文</b> | <a href="README_EN.md">English</a> | <a href="README_VI.md">Tiếng Việt</a>
+  <a href="README_CN.md">中文</a> | <a href="README_EN.md">English</a> | <b>Tiếng Việt</b>
 </p>
 
 <p align="center">
-  <a href="#安装"><img src="https://img.shields.io/badge/macOS-13%2B-blue?logo=apple" alt="macOS 13+" /></a>
+  <a href="#cài-đặt"><img src="https://img.shields.io/badge/macOS-13%2B-blue?logo=apple" alt="macOS 13+" /></a>
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="MIT License" /></a>
-  <a href="#测试体系"><img src="https://img.shields.io/badge/tests-81%20modules-brightgreen" alt="81 test modules" /></a>
-  <a href="#ai-工具集成-mcp"><img src="https://img.shields.io/badge/MCP-compatible-blueviolet" alt="MCP Compatible" /></a>
+  <a href="#hệ-thống-test"><img src="https://img.shields.io/badge/tests-81%20modules-brightgreen" alt="81 test modules" /></a>
+  <a href="#tích-hợp-ai-mcp"><img src="https://img.shields.io/badge/MCP-compatible-blueviolet" alt="MCP Compatible" /></a>
 </p>
 
 ---
@@ -26,95 +32,112 @@
   <img src="assets/screen-shot.jpg" alt="MacEverything Screenshot" width="720" />
 </p>
 
-## 功能亮点
+## Điểm nổi bật
 
-### 极速搜索
+### Tìm kiếm cực nhanh
 
-索引整块磁盘 **500 万+ 文件只需 14 秒**，之后每次搜索 **不到 5ms** 返回结果。比 Spotlight 快两个数量级。
+Index toàn bộ ổ đĩa **5 triệu+ file chỉ trong ~14 giây**, sau đó mỗi lần tìm **dưới 5ms** đã có kết quả. Nhanh hơn Spotlight hai bậc độ lớn.
 
-| 对比项 | MacEverything | Spotlight | `find` |
+| Tiêu chí | MacEverything | Spotlight | `find` |
 |--------|:---:|:---:|:---:|
-| 索引 500 万文件 | ~14 秒 | 数分钟以上 | 无索引 |
-| 搜索延迟 | **< 5ms** | 200ms–2s | 5–30s |
-| 实时文件监控 | FSEvents | FSEvents | 无 |
-| 内容搜索 | Trigram 索引 | 侧重元数据 | `grep` |
-| AI 工具集成 | 内置 MCP | 不支持 | 不支持 |
+| Index 5 triệu file | ~14 giây | Vài phút trở lên | Không index |
+| Độ trễ tìm kiếm | **< 5ms** | 200ms–2s | 5–30s |
+| Theo dõi realtime | FSEvents | FSEvents | Không |
+| Tìm nội dung | Index Trigram | Chủ yếu metadata | `grep` |
+| Tích hợp AI | MCP built-in | Không | Không |
 
-### 随叫随到
+### Gọi là có
 
-按 **`Option+Space`** 随时唤出搜索窗口（快捷键可自定义），搜索栏自动获得焦点 — 唤起即输入，搜完即走。支持开机自启（最小化后台运行），不打扰你的工作流。
+Nhấn **`Option+Space`** để gọi cửa sổ tìm kiếm bất cứ lúc nào (đổi phím được), con trỏ tự nhảy vào ô tìm — gọi là gõ, xong là đi. Hỗ trợ tự chạy khi mở máy (chạy nền thu gọn), không làm phiền workflow.
 
-### 智能输入体验
+### Trải nghiệm gõ thông minh
 
-- **Ghost 文本自动补全** — 输入时自动显示半透明建议文字，来自搜索历史（按频率排序）或系统关键词（如输入 `ex` 提示 `ext:`）。按 **Tab** 一键接受
-- **搜索栏语法高亮** — 实时彩色标注：过滤器名紫色、参数蓝色、引号字符串橙色、运算符红色
-- **搜索选项徽章** — 搜索栏旁的彩色徽章，一键切换 Regex / Case Sensitive / Whole Word / Match Filename
+- **Ghost text tự hoàn thành** — vừa gõ vừa hiện gợi ý mờ, từ lịch sử tìm kiếm (xếp theo tần suất) hoặc từ khóa hệ thống (gõ `ex` gợi ý `ext:`). Nhấn **Tab** là nhận
+- **Gợi ý tên file (suggest)** — gõ vài ký tự đầu, server trả ngay các tên khớp nhất, xếp theo độ mới. Có thể giới hạn trong 1 thư mục
+- **Highlight cú pháp** — tô màu realtime: tên filter màu tím, tham số màu xanh, chuỗi trong ngoặc màu cam, toán tử màu đỏ
+- **Huy hiệu tùy chọn** — cạnh ô tìm kiếm, bật/tắt nhanh Regex / Case Sensitive / Whole Word / Match Filename
 
-### Everything 风格查询语法
+### Tìm trong thư mục chỉ định (scope)
 
-完整的 AST 解析器，支持 15+ 过滤器、布尔运算、glob 通配符、正则表达式。内置语法帮助窗口（**Cmd+?**）。
+Giới hạn tìm kiếm trong 1 cây thư mục, không phân biệt hoa thường, chịu được tên có dấu (cả NFC/NFD):
 
-| 查询 | 说明 |
+- App: chọn thư mục scope trước khi gõ (sắp có)
+- MCP/API: tham số `scope`, ví dụ tìm `DAL-8000` trong `Bộ nhớ dùng chung`
+- Kết hợp được với mọi filter khác và mọi kiểu sắp xếp
+
+### Sắp xếp theo ngày tháng
+
+Kết quả sắp xếp được theo ngày sửa, ngày tạo (birthtime lấy từ kernel, file cũ tự fallback = ngày sửa), tên:
+
+- `rank` (mặc định, theo độ liên quan), `mtime_desc/asc`, `birth_desc/asc`, `name_asc`
+- Mỗi kết quả trả về kèm `modTime` + `birthTime` (epoch)
+- App hiển thị cột Ngày sửa/Ngày tạo, bấm để đổi thứ tự (sắp có)
+
+### Cú pháp truy vấn kiểu Everything
+
+Parser AST đầy đủ, 15+ filter, toán tử boolean, glob, regex. Cửa sổ trợ giúp cú pháp built-in (**Cmd+?**).
+
+| Truy vấn | Nghĩa |
 |------|------|
-| `readme` | 文件名包含 "readme" |
-| `*.swift` | 所有 Swift 源文件 |
-| `ext:py size:>1mb` | 大于 1MB 的 Python 文件 |
-| `dm:today` | 今天修改过的文件 |
-| `config path:/usr` | `/usr` 下包含 "config" 的文件 |
-| `"exact phrase"` | 精确短语匹配 |
-| `foo OR bar` | 布尔 OR 运算 |
-| `case:Makefile` | 区分大小写搜索 |
-| `regex:^test_.*\.py$` | 正则表达式搜索 |
-| `type:folder node_modules` | 仅搜索目录 |
-| `~/Documents/*.pdf` | Tilde 展开 + glob |
-| `infile:TODO ext:cpp` | C++ 文件中搜索 "TODO" |
+| `readme` | Tên file chứa "readme" |
+| `*.swift` | Mọi file Swift |
+| `ext:py size:>1mb` | File Python trên 1MB |
+| `dm:today` | File sửa hôm nay |
+| `config path:/usr` | File chứa "config" dưới `/usr` |
+| `"exact phrase"` | Khớp cụm chính xác |
+| `foo OR bar` | Toán tử OR |
+| `case:Makefile` | Phân biệt hoa thường |
+| `regex:^test_.*\.py$` | Biểu thức chính quy |
+| `type:folder node_modules` | Chỉ tìm thư mục |
+| `~/Documents/*.pdf` | Tilde + glob |
+| `infile:TODO ext:cpp` | Tìm "TODO" trong file C++ |
 
 <details>
-<summary><b>全部过滤器列表</b></summary>
+<summary><b>Danh sách filter đầy đủ</b></summary>
 
-| 过滤器 | 说明 | 示例 |
+| Filter | Nghĩa | Ví dụ |
 |--------|------|------|
-| `ext:` | 文件扩展名 | `ext:swift,h` |
-| `size:` | 文件大小 | `size:>1mb`, `size:100kb-5mb` |
-| `type:` | 文件/目录 | `type:folder` |
-| `path:` | 路径包含 | `path:Downloads` |
-| `nopath:` | 路径排除 | `nopath:node_modules` |
-| `parent:` | 直接父目录 | `parent:src` |
-| `depth:` | 目录深度 | `depth:<3` |
-| `dm:` | 修改日期 | `dm:today`, `dm:>2024-01-01` |
-| `dc:` | 创建日期 | `dc:thisweek` |
-| `da:` | 访问日期 | `da:last7days` |
-| `len:` | 文件名长度 | `len:>50` |
-| `case:` | 区分大小写 | `case:README` |
-| `regex:` | 正则表达式 | `regex:^test_` |
-| `ww:` | 全词匹配 | `ww:test` |
-| `wfn:` | 全文件名匹配 | `wfn:Makefile` |
-| `content:` / `infile:` | 内容搜索 | `infile:TODO` |
-| `audio:` `video:` `pic:` `doc:` `zip:` | 文件类型宏 | `audio:` = 所有音频文件 |
+| `ext:` | Đuôi file | `ext:swift,h` |
+| `size:` | Dung lượng | `size:>1mb`, `size:100kb-5mb` |
+| `type:` | File/thư mục | `type:folder` |
+| `path:` | Đường dẫn chứa | `path:Downloads` |
+| `nopath:` | Loại trừ đường dẫn | `nopath:node_modules` |
+| `parent:` | Thư mục cha trực tiếp | `parent:src` |
+| `depth:` | Độ sâu thư mục | `depth:<3` |
+| `dm:` | Ngày sửa | `dm:today`, `dm:>2024-01-01` |
+| `dc:` | Ngày tạo | `dc:thisweek` |
+| `da:` | Ngày truy cập | `da:last7days` |
+| `len:` | Độ dài tên file | `len:>50` |
+| `case:` | Phân biệt hoa thường | `case:README` |
+| `regex:` | Regex | `regex:^test_` |
+| `ww:` | Khớp cả từ | `ww:test` |
+| `wfn:` | Khớp cả tên file | `wfn:Makefile` |
+| `content:` / `infile:` | Tìm nội dung | `infile:TODO` |
+| `audio:` `video:` `pic:` `doc:` `zip:` | Macro loại file | `audio:` = mọi file audio |
 
 </details>
 
-### 全文内容搜索
+### Tìm toàn văn bản trong file
 
-输入 `infile:关键词` 搜索文件内容，结果附带关键词高亮上下文片段。基于 Trigram 索引加速，仅重新索引变更文件。可在「内容设置」中配置索引的文件类型和最大文件大小。
+Gõ `infile:từ-khóa` để tìm trong nội dung file, kết quả kèm đoạn ngữ cảnh highlight từ khóa. Index Trigram tăng tốc, chỉ index lại file thay đổi. Cấu hình loại file + dung lượng tối đa trong 「cài đặt nội dung」.
 
-### 实时同步，永不过时
+### Đồng bộ realtime, không bao giờ cũ
 
-- **文件监控** — 基于 FSEvents 实时监听文件系统变更，新建、重命名、删除的文件立即出现在搜索结果中
-- **两阶段即时启动** — 启动时先加载磁盘缓存（立即可搜），后台通过 FSEvents 增量追赶变更，搜索零等待
-- **焦点感知省电** — 窗口不在前台时暂停刷新，回到前台时批量追赶，几乎零后台 CPU 占用
+- **Giám sát file** — FSEvents theo dõi thay đổi filesystem realtime, file mới/đổi tên/xóa hiện ngay trong kết quả
+- **Khởi động 2 giai đoạn** — mở app là nạp cache đĩa (tìm được ngay), nền đuổi kịp thay đổi qua FSEvents, tìm kiếm không chờ đợi
+- **Tiết kiệm pin theo focus** — cửa sổ không ở foreground thì dừng refresh, quay lại thì đuổi kịp hàng loạt, CPU nền gần như bằng 0
 
-### 交互细节
+### Chi tiết tương tác
 
-- **智能高亮** — 搜索结果中匹配部分高亮标记，基于 AST 感知：正确处理 glob 通配符、正则、大小写、NOT 排除等复杂场景
-- **拖放** — 直接从搜索结果拖放文件到 Finder、VS Code、Xcode 等任意应用
-- **右键菜单** — 打开 / 在 Finder 中显示 / 复制路径
-- **Cmd+Click** — 快速在 Finder 中定位文件
-- **最近文件** — 搜索栏为空时自动展示最近修改的文件
+- **Highlight thông minh** — phần khớp trong kết quả được bôi ▪, nhận biết AST: xử lý đúng glob, regex, hoa thường, NOT loại trừ
+- **Kéo thả** — kéo thẳng file từ kết quả sang Finder, VS Code, Xcode, app bất kỳ
+- **Chuột phải** — Open / Reveal in Finder / Copy Path
+- **Cmd+Click** — định vị nhanh trong Finder
+- **File gần đây** — ô tìm trống thì tự hiện file mới sửa
 
-### AI 工具集成 (MCP)
+### Tích hợp AI (MCP)
 
-内置 [Model Context Protocol](https://modelcontextprotocol.io/) 服务器，让 AI 编程工具即时搜索你的文件系统。在菜单栏一键开启，支持 **Claude Code**、**Cursor**、**Claude Desktop**。
+Server [Model Context Protocol](https://modelcontextprotocol.io/) built-in, cho AI coding tool tìm filesystem tức thì. Bật 1 click ở menu bar, hỗ trợ **Claude Code**, **Cursor**, **Claude Desktop**.
 
 ```
 Claude Code / Cursor / Claude Desktop
@@ -126,37 +149,42 @@ Claude Code / Cursor / Claude Desktop
   MacEverything.app
 ```
 
-| 工具 | 说明 |
+| Tool | Nghĩa |
 |------|------|
-| `search_files` | 文件名搜索（Trigram 加速） |
-| `search_content` | 全文内容搜索 |
-| `recent_files` | 最近修改的文件 |
-| `index_status` | 索引统计与健康状态 |
+| `search_files` | Tìm tên file/thư mục (tăng tốc Trigram). Có `scope`, `sort` |
+| `suggest` | Gợi ý tên theo prefix, mới nhất trước. Có `scope` |
+| `search_content` | Tìm toàn văn, trả đường dẫn + đoạn ngữ cảnh |
+| `recent_files` | File mới sửa |
+| `index_status` | Thống kê + sức khỏe index |
+
+Tham số `sort`: `rank` (mặc định), `mtime_desc`, `mtime_asc`, `birth_desc`, `birth_asc`, `name_asc`.
 
 ### HTTP API
 
-本地 REST API 监听 `localhost:19860`，方便脚本调用和自动化：
+REST API local ở `localhost:19860`, tiện cho script và tự động hóa:
 
 ```bash
-curl "http://localhost:19860/api/search?q=readme&limit=10"       # 搜索文件
-curl "http://localhost:19860/api/search/content?q=TODO"           # 内容搜索
-curl "http://localhost:19860/api/recent?limit=20"                 # 最近文件
-curl "http://localhost:19860/api/status"                          # 索引状态
+curl "http://localhost:19860/api/search?q=readme&limit=10"       # tìm file
+curl "http://localhost:19860/api/search?q=readme&scope=/Users/me/Documents&sort=mtime_desc"
+curl "http://localhost:19860/api/suggest?prefix=LP1&limit=5"     # gợi ý
+curl "http://localhost:19860/api/search/content?q=TODO"           # tìm nội dung
+curl "http://localhost:19860/api/recent?limit=20"                 # file gần đây
+curl "http://localhost:19860/api/status"                          # trạng thái index
 ```
 
-### 安装
+### Cài đặt
 
-#### 下载 DMG（推荐）
+#### Tải DMG (khuyên dùng)
 
-1. 从 [Releases](../../releases) 下载 `MacEverything.dmg`
-2. 将 `MacEverything.app` 拖入「应用程序」文件夹
-3. 启动后按提示授予 **完全磁盘访问权限**
-4. 等待初始扫描完成（约 14 秒）
-5. 按 `Option+Space` 开始搜索
+1. Tải `MacEverything.dmg` ở [Releases](../../releases)
+2. Kéo `MacEverything.app` vào thư mục 「Ứng dụng」
+3. Mở app, cấp **Full Disk Access** khi được hỏi
+4. Chờ quét lần đầu (~14 giây)
+5. Nhấn `Option+Space` để tìm
 
-#### 从源码构建
+#### Build từ source
 
-**环境要求：** macOS 13+，Xcode 15+
+**Yêu cầu:** macOS 13+, Xcode 15+
 
 ```bash
 git clone https://github.com/user/MacEverything.git && cd MacEverything
@@ -169,9 +197,9 @@ hdiutil create -volname MacEverything \
   -ov -format UDZO MacEverything.dmg
 ```
 
-#### CLI 守护进程
+#### Daemon CLI
 
-无头模式，适用于服务器或自动化环境：
+Chế độ headless, cho server hoặc tự động hóa:
 
 ```bash
 make daemon
@@ -180,159 +208,159 @@ make daemon
 
 ---
 
-<h2 align="center">开发者篇：技术深度</h2>
+<h2 align="center">Dành cho developer: chiều sâu kỹ thuật</h2>
 
 <p align="center">
-  以下内容面向对实现细节感兴趣的开发者。
+  Phần dưới dành cho ai quan tâm chi tiết cài đặt.
 </p>
 
-### 架构总览
+### Tổng quan kiến trúc
 
-```
 ┌─────────────────────────────────────┐
-│       SwiftUI 应用层                │  界面 · ViewModel · MVVM
+│       Tầng app SwiftUI              │  Giao diện · ViewModel · MVVM
 ├─────────────────────────────────────┤
-│    Objective-C++ 桥接层             │  零开销互操作
+│    Tầng bridge Objective-C++        │  Tương tác không overhead
 ├─────────────────────────────────────┤
-│       C++20 核心引擎                │  扫盘 · 索引 · 搜索 · 持久化
+│       Engine C++20                  │  Quét · index · tìm · persist
 └─────────────────────────────────────┘
 ```
 
-同一套 C++20 核心引擎驱动三种部署模式：
+Cùng 1 engine C++20 chạy 3 chế độ triển khai:
 
-| 模式 | 说明 |
+| Chế độ | Nghĩa |
 |------|------|
-| **GUI 应用** | SwiftUI 菜单栏应用，`Option+Space` 全局快捷键 |
-| **CLI 守护进程** | 无头 `maceverything-daemon` — 相同引擎，无 UI |
-| **MCP 服务器** | `MacEverythingMCP` — stdio JSON-RPC 代理，供 AI 工具调用 |
+| **App GUI** | App menu bar SwiftUI, phím tắt toàn cục `Option+Space` |
+| **CLI daemon** | `maceverything-daemon` headless — cùng engine, không UI |
+| **Server MCP** | `MacEverythingMCP` — proxy stdio JSON-RPC cho AI tool gọi |
 
-### 核心引擎
+### Engine lõi
 
-| 组件 | 关键设计 |
+| Thành phần | Thiết kế chính |
 |------|---------|
-| **DirectoryScanner** | 多线程工作窃取 + `getattrlistbulk` 单次系统调用批量获取文件属性，4–32 线程自适应 |
-| **SearchEngine** | Trigram 倒排索引（name + path 双索引）+ 竞争选择最优候选集 + SoA 列式过滤 |
-| **ContentIndex** | Trigram 全文倒排索引，FNV-1a 哈希增量更新，仅重新索引变更文件 |
-| **SIMDSearch** | ARM NEON 128-bit first-last byte 向量化匹配 + 2x 循环展开，单线程 11.5 GB/s |
-| **IndexPersistence** | WAL + CRC32 + 分页脏页刷写 + 原子 rename，COW 无阻塞压缩（锁持有 < 100ms） |
-| **FileSystemWatcher** | FSEvents + eventId 增量回放 + 日志截断检测自动子树重扫 |
-| **PathTable** | 路径字符串 intern 化 — 目录路径仅存 `uint32` 索引，百万文件节省 ~550MB |
-| **QueryParser** | 完整 AST 管线：Tokenizer → FilterParser → Parser → QueryAST，30+ 过滤器关键词 |
+| **DirectoryScanner** | Work-stealing đa luồng + `getattrlistbulk` lấy thuộc tính hàng loạt (kể cả giờ tạo) trong 1 syscall, 4–32 luồng tự thích ứng |
+| **SearchEngine** | Index đảo Trigram (2 index name + path) + chọn tập ứng viên tối ưu + lọc cột SoA |
+| **ContentIndex** | Index đảo toàn văn Trigram, cập nhật tăng dần hash FNV-1a, chỉ index lại file đổi |
+| **SIMDSearch** | So khớp vector NEON ARM 128-bit first-last byte + unroll 2x, đơn luồng 11.5 GB/s |
+| **IndexPersistence** | WAL + CRC32 + flush dirty-page + rename nguyên tử, nén COW không chặn (giữ lock < 100ms). Flat v6 section hóa, Paged v5, legacy V4 — section/cột mới tương thích 2 chiều |
+| **FileSystemWatcher** | FSEvents + phát lại tăng dần theo eventId + phát hiện cắt log tự quét lại subtree |
+| **PathTable** | Intern chuỗi đường dẫn — mỗi thư mục chỉ 1 `uint32`, triệu file tiết kiệm ~550MB |
+| **QueryParser** | Pipeline AST đầy đủ: Tokenizer → FilterParser → Parser → QueryAST, 30+ từ khóa filter |
 
-### 基准测试
+### Benchmark
 
-测试环境：macOS Darwin 24.3.0，**540 万索引文件**，48 种查询类型：
+Môi trường: macOS Darwin 24.3.0, **5.4 triệu file index**, 48 loại truy vấn:
 
-#### 搜索延迟
+#### Độ trễ tìm kiếm
 
-| 查询类型 | 平均延迟 | 示例 |
+| Loại truy vấn | Trễ trung bình | Ví dụ |
 |----------|:---------:|------|
-| 长关键词 (7+ 字符) | **0.1–1ms** | `screenshot` 0.1ms, `dockerfile` 0.1ms |
-| 中等关键词 (4–6 字符) | **1–5ms** | `readme` 1.2ms, `config` 4.7ms |
-| Glob 模式 | **0.7–18ms** | `*.cpp` 0.7ms, `*.swift` 1.5ms |
-| 路径查询 | **3–32ms** | `package.json` 2.9ms |
-| 全部 48 种查询 (均值) | **10.5ms** | SoA 优化后最新结果 |
+| Từ khóa dài (7+ ký tự) | **0.1–1ms** | `screenshot` 0.1ms, `dockerfile` 0.1ms |
+| Từ khóa vừa (4–6 ký tự) | **1–5ms** | `readme` 1.2ms, `config` 4.7ms |
+| Glob | **0.7–18ms** | `*.cpp` 0.7ms, `*.swift` 1.5ms |
+| Truy vấn đường dẫn | **3–32ms** | `package.json` 2.9ms |
+| Trung bình 48 loại | **10.5ms** | Kết quả mới nhất sau tối ưu SoA |
 
-#### Trigram vs 线性扫描
+#### Trigram vs quét tuyến tính
 
-| 查询 | Trigram | 线性扫描 | 加速比 |
+| Truy vấn | Trigram | Tuyến tính | Tăng tốc |
 |------|:------:|:------:|:------:|
 | `node_modules` | 0.5ms | 154ms | **308x** |
 | `application` | 2.1ms | 175ms | **83x** |
 | `readme` | 1.2ms | 49ms | **41x** |
 
-#### SIMD 字符串搜索 (Apple M3 Pro)
+#### Tìm chuỗi SIMD (Apple M3 Pro)
 
-| 方法 | 吞吐量 | 对比 `std::string::find` |
+| Phương pháp | Thông lượng | So với `std::string::find` |
 |------|:------:|:------------------------:|
-| `std::string::find` | 1.2 GB/s | 基准线 |
-| **NEON 128-bit（单线程）** | **11.5 GB/s** | **9.5x** |
-| **NEON 128-bit（12 线程）** | **74.3 GB/s** | **60.7x** |
+| `std::string::find` | 1.2 GB/s | Baseline |
+| **NEON 128-bit (đơn luồng）** | **11.5 GB/s** | **9.5x** |
+| **NEON 128-bit (12 luồng）** | **74.3 GB/s** | **60.7x** |
 
-### 关键技术
+### Kỹ thuật then chốt
 
-| 技术 | 效果 |
+| Kỹ thuật | Hiệu quả |
 |------|------|
-| `getattrlistbulk` | 单次系统调用批量获取文件属性 — 避免逐文件 `stat` |
-| Trigram 倒排索引 | 亚线性搜索：比线性扫描快 33x–308x |
-| SoA 列式布局 | 缓存友好的内存访问模式，纯过滤查询 SIMD 批量判断 16 条记录 |
-| `__builtin_prefetch` | 预取距离 8，隐藏候选验证阶段的随机内存访问延迟 |
-| ARM NEON SIMD | 128-bit 向量化字符串匹配，2x 循环展开，逼近内存带宽上限 |
-| GCD 并行扫描 | Trigram 无法加速时启用多核线性扫描 |
-| StringPool 连续内存 | 文件名紧凑排列在单一 `char` 缓冲区，SIMD 友好 |
-| PathTable intern 化 | 目录路径仅存 `uint32` 索引 — 百万文件节省 ~550MB |
-| Generation 计数器 | 每 1024 次迭代检查，快速输入时零开销取消过时查询 |
-| APFS Firmlink 去重 | inode + devid 检测，正确处理 macOS Data/System 卷合并环路 |
-| Regex Trigram 预过滤 | 从正则中提取字面量生成 trigram 候选，~7s → <100ms |
-| 自适应 Trigram 旁路 | 候选集过大时自动回退并行扫描，避免无效索引查找 |
-| COW 无阻塞压缩 | 写时复制，压缩期间独占锁持有 < 100ms（原 30–60s） |
-| 分页增量持久化 | 仅写入脏页，典型 flush I/O 从 ~112MB 降至 KB 级 |
+| `getattrlistbulk` | 1 syscall lấy thuộc tính hàng loạt — khỏi `stat` từng file |
+| Index đảo Trigram | Tìm gần tuyến tính: nhanh hơn quét tuyến tính 33x–308x |
+| Bố cục cột SoA | Truy cập thân thiện cache, truy vấn lọc thuần SIMD 16 record/lần |
+| `__builtin_prefetch` | Prefetch khoảng cách 8, giấu độ trễ RAM ở phase xác minh |
+| ARM NEON SIMD | So chuỗi vector 128-bit, unroll 2x, gần kịch băng thông RAM |
+| GCD quét song song | Trigram không gánh được thì dùng đa nhân quét tuyến tính |
+| StringPool liền mạch | Tên file xếp gọn trong 1 buffer `char`, thân thiện SIMD |
+| Intern PathTable | Đường dẫn chỉ lưu `uint32` — triệu file tiết kiệm ~550MB |
+| Bộ đếm Generation | Mỗi 1024 vòng lặp check 1 lần, gõ nhanh hủy query cũ zero-cost |
+| Khử trùng Firmlink APFS | inode + devid phát hiện, xử lý đúng vòng merge Data/System |
+| Prefilter Trigram cho Regex | Trích literal từ regex làm ứng viên trigram, ~7s → <100ms |
+| Bypass Trigram thích ứng | Ứng viên quá đông thì về quét song song, khỏi tra index vô ích |
+| Nén COW không chặn | Copy-on-write, giữ exclusive lock < 100ms (trước 30–60s) |
+| Lưu trữ tăng dần phân trang | Chỉ ghi dirty page, flush I/O thường từ ~112MB xuống KB |
+| Prefix scope + NFC/NFD | Lọc theo tiền tố đường dẫn, khớp cả 2 chuẩn Unicode macOS |
 
-### 测试体系
+### Hệ thống test
 
-79 个测试模块覆盖完整技术栈，支持 AddressSanitizer 和 ThreadSanitizer：
+81 module test phủ toàn stack, hỗ trợ AddressSanitizer và ThreadSanitizer:
 
 ```bash
-make test          # 快速单元测试 + 桥接层 lint
-make test-slow     # 集成测试（全盘扫描、FSEvents、端到端）
-make test-all      # 全部测试
+make test          # unit test nhanh + lint bridge
+make test-slow     # test tích hợp (quét toàn đĩa, FSEvents, end-to-end)
+make test-all      # toàn bộ
 make test-asan     # AddressSanitizer
 make test-tsan     # ThreadSanitizer
 ```
 
-覆盖范围：
-- **核心引擎**：扫描、查询、变更、压缩、排序、路径搜索
-- **持久化**：WAL CRC 完整性、批量回放、竞态条件、分页持久化 v5
-- **内容索引**：Trigram、压缩、修改时间跟踪、WAL 跟踪
-- **搜索/查询**：分词器、解析器、过滤器、日期过滤、结构化查询、正则 Trigram、高亮提示
-- **性能**：SIMD 搜索、千万条记录合成基准、Trigram 竞争测试
-- **集成**：线程安全、端到端、HTTP 引擎热替换、MCP 协议
-- **内存安全**：ASan + TSan 构建
+Phạm vi:
+- **Engine lõi**: quét, truy vấn, mutation, nén, sắp xếp, tìm đường dẫn, scope, suggest, birthtime
+- **Persist**: toàn vẹn WAL CRC, replay hàng loạt, race, paged v5, flat v6 section
+- **Index nội dung**: Trigram, nén, theo dõi mtime, WAL
+- **Tìm/query**: tokenizer, parser, filter, lọc ngày, structured query, regex trigram, highlight hint
+- **Hiệu năng**: tìm SIMD, benchmark tổng hợp chục triệu record, đua trigram
+- **Tích hợp**: thread-safe, end-to-end, hot-swap engine qua HTTP, giao thức MCP
+- **An toàn bộ nhớ**: build ASan + TSan
 
-### 项目结构
+### Cấu trúc project
 
 ```
 MacEverything/
-├── Core/                  # C++20 核心引擎
-│   ├── SearchEngine       # Trigram 索引 + 并行查询（5 个 .cpp 文件）
-│   ├── DirectoryScanner   # 多线程批量扫描器
-│   ├── ContentIndex       # 全文倒排索引
-│   ├── IndexPersistence   # WAL + 分页持久化
-│   ├── FileSystemWatcher  # FSEvents 实时监控
-│   ├── HttpServer         # 内嵌 REST API 服务器
-│   ├── SIMDSearch         # ARM NEON 向量化搜索
-│   ├── QueryAST/Parser    # 完整查询语言管线
-│   ├── PathTable          # 字符串 intern 表
-│   └── ServiceEngine      # 生命周期编排
-├── Bridge/                # Objective-C++ 桥接层
-│   └── MacSearchBridge    # C++ ↔ Swift 零开销互操作
-├── App/                   # SwiftUI 应用层
-│   ├── ContentView        # 主搜索界面
-│   ├── SearchViewModel    # MVVM + 分级防抖
-│   ├── HotkeyManager      # 全局快捷键注册
-│   └── MCPConfigManager   # MCP 一键配置
-├── CLI/                   # 命令行工具
-│   ├── daemon_main        # 无头守护进程
-│   └── mcp_main           # MCP 服务器（stdio JSON-RPC）
-└── tests/                 # 79 个测试模块
+├── Core/                  # Engine C++20
+│   ├── SearchEngine       # Index Trigram + truy vấn song song (6 file .cpp)
+│   ├── DirectoryScanner   # Scanner hàng loạt đa luồng
+│   ├── ContentIndex       # Index đảo toàn văn
+│   ├── IndexPersistence   # WAL + persist phân trang
+│   ├── FileSystemWatcher  # Giám sát realtime FSEvents
+│   ├── HttpServer         # Server REST API nhúng
+│   ├── SIMDSearch         # Tìm chuỗi vector NEON ARM
+│   ├── QueryAST/Parser    # Pipeline ngôn ngữ truy vấn
+│   ├── PathTable          # Bảng intern chuỗi
+│   └── ServiceEngine      # Điều phối vòng đời
+├── Bridge/                # Tầng bridge Objective-C++
+│   └── MacSearchBridge    # Tương tác C++ ↔ Swift zero-cost
+├── App/                   # Tầng app SwiftUI
+│   ├── ContentView        # Giao diện tìm chính
+│   ├── SearchViewModel    # MVVM + debounce phân tầng
+│   ├── HotkeyManager      # Đăng ký phím tắt toàn cục
+│   └── MCPConfigManager   # Cấu hình MCP 1 click
+├── CLI/                   # Tool dòng lệnh
+│   ├── daemon_main        # Daemon headless
+│   └── mcp_main           # Server MCP (stdio JSON-RPC)
+└── tests/                 # 81 module test
 ```
 
-## 参与贡献
+## Đóng góp
 
-欢迎贡献代码！请遵循以下流程：
+Hoan nghênh đóng góp! Quy trình:
 
-1. Fork 本仓库
-2. 创建功能分支 (`feat/...`) 或修复分支 (`fix/...`)
-3. 为新功能编写测试
-4. 确保 `make test-all` 通过
-5. 提交 Pull Request
+1. Fork repo
+2. Tạo nhánh tính năng (`feat/...`) hoặc sửa lỗi (`fix/...`)
+3. Viết test cho tính năng mới
+4. Đảm bảo `make test-all` xanh
+5. Gửi Pull Request
 
-## 许可证
+## Giấy phép
 
-本项目基于 MIT 许可证开源 — 详见 [LICENSE](LICENSE) 文件。
+Project open source theo giấy phép MIT — xem file [LICENSE](LICENSE).
 
 ---
 
 <p align="center">
-  <b>如果 MacEverything 让你找文件更快了，请给一颗 Star 支持！</b>
+  <b>Nếu MacEverything giúp anh tìm file nhanh hơn, cho 1 Star ủng hộ nhé!</b>
 </p>

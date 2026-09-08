@@ -9,11 +9,13 @@ NS_ASSUME_NONNULL_BEGIN
 @property (nonatomic, readonly) uint8_t type;      // 1=file, 2=dir, 3=symlink, 4=other
 @property (nonatomic, readonly) uint64_t size;
 @property (nonatomic, readonly) time_t modTime;
+@property (nonatomic, readonly) time_t birthTime;  // 0 = unknown (== modTime from engine)
 - (instancetype)initWithName:(NSString *)name
                         path:(NSString *)path
                         type:(uint8_t)type
                         size:(uint64_t)size
-                     modTime:(time_t)modTime;
+                     modTime:(time_t)modTime
+                   birthTime:(time_t)birthTime;
 @end
 
 /// Lightweight wrapper exposing a content search result to Swift.
@@ -81,6 +83,13 @@ NS_ASSUME_NONNULL_BEGIN
 - (NSArray<MEFileResult *> *)queryResults:(NSString *)keyword
                                maxResults:(uint32_t)maxResults
                                 sessionId:(uint64_t)sessionId;
+
+/// Perform query with session-scoped cancellation and result ordering.
+/// sortOrder: 0=rank 1=mtime_desc 2=mtime_asc 3=birth_desc 4=birth_asc 5=name_asc.
+- (NSArray<MEFileResult *> *)queryResults:(NSString *)keyword
+                               maxResults:(uint32_t)maxResults
+                                sessionId:(uint64_t)sessionId
+                                sortOrder:(NSInteger)sortOrder;
 
 /// Cancel in-flight queries for the given session.
 - (void)cancelSession:(uint64_t)sessionId;

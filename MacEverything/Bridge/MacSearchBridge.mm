@@ -10,7 +10,8 @@
                         path:(NSString *)path
                         type:(uint8_t)type
                         size:(uint64_t)size
-                     modTime:(time_t)modTime {
+                     modTime:(time_t)modTime
+                   birthTime:(time_t)birthTime {
     self = [super init];
     if (self) {
         _name = [name copy];
@@ -18,6 +19,7 @@
         _type = type;
         _size = size;
         _modTime = modTime;
+        _birthTime = birthTime;
     }
     return self;
 }
@@ -308,7 +310,8 @@
                                                         path:nsPath
                                                         type:r.type
                                                         size:r.size
-                                                     modTime:r.modTime]];
+                                                     modTime:r.modTime
+                                                     birthTime:r.birthTime]];
     });
     return results;
 }
@@ -344,7 +347,8 @@
                                                         path:nsPath
                                                         type:r.type
                                                         size:r.size
-                                                     modTime:r.modTime]];
+                                                     modTime:r.modTime
+                                                     birthTime:r.birthTime]];
     });
     return results;
 }
@@ -368,7 +372,43 @@
                                                         path:nsPath
                                                         type:r.type
                                                         size:r.size
-                                                     modTime:r.modTime]];
+                                                     modTime:r.modTime
+                                                     birthTime:r.birthTime]];
+    });
+    return results;
+}
+
+- (NSArray<MEFileResult *> *)queryResults:(NSString *)keyword
+                               maxResults:(uint32_t)maxResults
+                                sessionId:(uint64_t)sessionId
+                                sortOrder:(NSInteger)sortOrder {
+    auto engine = _serviceEngine->safeEngine();
+    if (!engine) return @[];
+
+    SearchEngine::SortOrder order = SearchEngine::SortOrder::Rank;
+    switch (sortOrder) {
+        case 1: order = SearchEngine::SortOrder::MtimeDesc; break;
+        case 2: order = SearchEngine::SortOrder::MtimeAsc; break;
+        case 3: order = SearchEngine::SortOrder::BirthDesc; break;
+        case 4: order = SearchEngine::SortOrder::BirthAsc; break;
+        case 5: order = SearchEngine::SortOrder::NameAsc; break;
+        default: break;
+    }
+    std::string key([keyword UTF8String]);
+    auto indices = engine->query(key, maxResults, true, sessionId, "", order);
+    if (indices.empty()) return @[];
+
+    NSMutableArray<MEFileResult *> *results = [NSMutableArray arrayWithCapacity:indices.size()];
+    engine->forEachRecordWithPath(indices, [&](uint32_t, const FileRecord& r, const std::string& path) {
+        NSString *nsName = [NSString stringWithUTF8String:r.name.c_str()];
+        NSString *nsPath = [NSString stringWithUTF8String:path.c_str()];
+        if (!nsName || !nsPath) return;
+        [results addObject:[[MEFileResult alloc] initWithName:nsName
+                                                        path:nsPath
+                                                        type:r.type
+                                                        size:r.size
+                                                     modTime:r.modTime
+                                                   birthTime:r.birthTime]];
     });
     return results;
 }
@@ -395,7 +435,8 @@
                                                         path:nsPath
                                                         type:r.type
                                                         size:r.size
-                                                     modTime:r.modTime]];
+                                                     modTime:r.modTime
+                                                     birthTime:r.birthTime]];
     });
     return results;
 }

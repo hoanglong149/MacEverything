@@ -34,6 +34,31 @@ struct ContentView: View {
                     viewModel.onSearchTextChanged()
                 }
                 SearchOptionBadges(options: searchOptions)
+                Menu {
+                    Section("Sort by") {
+                        ForEach(SearchOptions.SortOption.allCases, id: \.self) { opt in
+                            Button {
+                                searchOptions.sortOption = opt
+                            } label: {
+                                if searchOptions.sortOption == opt {
+                                    Image(systemName: "checkmark")
+                                }
+                                Text(opt.label)
+                            }
+                        }
+                    }
+                    Section("Columns") {
+                        Toggle("Size", isOn: $searchOptions.showSize)
+                        Toggle("Modified", isOn: $searchOptions.showModified)
+                        Toggle("Created", isOn: $searchOptions.showCreated)
+                    }
+                } label: {
+                    Image(systemName: "arrow.up.arrow.down")
+                        .font(.system(size: 16))
+                        .foregroundColor(.secondary)
+                }
+                .menuStyle(.borderlessButton)
+                .accessibilityIdentifier("sortMenu")
                 if !viewModel.searchText.isEmpty {
                     Button {
                         viewModel.searchText = ""

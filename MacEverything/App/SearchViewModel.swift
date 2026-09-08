@@ -9,6 +9,7 @@ struct FileItem: Identifiable {
     let type: UInt8
     let size: UInt64
     let modTime: time_t
+    let birthTime: time_t
 }
 
 struct ContentFileItem: Identifiable {
@@ -273,10 +274,11 @@ class SearchViewModel: ObservableObject {
         let pageSize = Self.pageSize
         let gen = searchGeneration
         let query = searchOptions.buildQuery(keyword)
+        let sortOrder = searchOptions.sortOption.rawValue
         Task.detached { [weak self] in
             let start = CFAbsoluteTimeGetCurrent()
             // P-4: Use batch method — single engine lock, no NSNumber boxing
-            let results = bridge.queryResults(query, maxResults: maxResults, sessionId: Self.guiSessionId)
+            let results = bridge.queryResults(query, maxResults: maxResults, sessionId: Self.guiSessionId, sortOrder: sortOrder)
             let elapsed = (CFAbsoluteTimeGetCurrent() - start) * 1000
             let totalCount = results.count
 
@@ -288,7 +290,7 @@ class SearchViewModel: ObservableObject {
                 items.append(FileItem(
                     id: "\(r.path)/\(r.name)", index: 0,
                     name: r.name, path: r.path,
-                    type: r.type, size: r.size, modTime: r.modTime
+                    type: r.type, size: r.size, modTime: r.modTime, birthTime: r.birthTime
                 ))
             }
 
@@ -353,7 +355,7 @@ class SearchViewModel: ObservableObject {
                 newItems.append(FileItem(
                     id: "\(r.path)/\(r.name)", index: 0,
                     name: r.name, path: r.path,
-                    type: r.type, size: r.size, modTime: r.modTime
+                    type: r.type, size: r.size, modTime: r.modTime, birthTime: r.birthTime
                 ))
             }
 
@@ -383,7 +385,7 @@ class SearchViewModel: ObservableObject {
                 items.append(FileItem(
                     id: "\(r.path)/\(r.name)", index: 0,
                     name: r.name, path: r.path,
-                    type: r.type, size: r.size, modTime: r.modTime
+                    type: r.type, size: r.size, modTime: r.modTime, birthTime: r.birthTime
                 ))
             }
             await MainActor.run { [weak self] in

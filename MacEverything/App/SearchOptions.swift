@@ -31,7 +31,40 @@ class SearchOptions: ObservableObject {
         }
     }
 
-    private init() {}
+    enum SortOption: Int, CaseIterable {
+        case rank = 0, mtimeDesc, mtimeAsc, birthDesc, birthAsc, nameAsc
+        var label: String {
+            switch self {
+            case .rank: return "Relevance"
+            case .mtimeDesc: return "Modified ↓"
+            case .mtimeAsc: return "Modified ↑"
+            case .birthDesc: return "Created ↓"
+            case .birthAsc: return "Created ↑"
+            case .nameAsc: return "Name A–Z"
+            }
+        }
+    }
+
+    @Published var sortOption: SortOption = .rank {
+        didSet { UserDefaults.standard.set(sortOption.rawValue, forKey: "sortOption") }
+    }
+    @Published var showSize: Bool = true {
+        didSet { UserDefaults.standard.set(showSize, forKey: "showSize") }
+    }
+    @Published var showModified: Bool = true {
+        didSet { UserDefaults.standard.set(showModified, forKey: "showModified") }
+    }
+    @Published var showCreated: Bool = false {
+        didSet { UserDefaults.standard.set(showCreated, forKey: "showCreated") }
+    }
+
+    private init() {
+        let d = UserDefaults.standard
+        sortOption = SortOption(rawValue: d.integer(forKey: "sortOption")) ?? .rank
+        if d.object(forKey: "showSize") != nil { showSize = d.bool(forKey: "showSize") }
+        if d.object(forKey: "showModified") != nil { showModified = d.bool(forKey: "showModified") }
+        if d.object(forKey: "showCreated") != nil { showCreated = d.bool(forKey: "showCreated") }
+    }
 
     var hasActiveOptions: Bool {
         isRegex || isCaseSensitive || isWholeWord || isMatchFilename

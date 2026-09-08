@@ -58,7 +58,15 @@ final class FileIconCache {
 struct ResultRow: View {
     let item: FileItem
     let hints: [HighlightHint]
+    @ObservedObject private var options = SearchOptions.shared
     @State private var isHovered = false
+
+    private static let dateFmt: DateFormatter = {
+        let f = DateFormatter()
+        f.dateStyle = .short
+        f.timeStyle = .short
+        return f
+    }()
 
     var body: some View {
         HStack(spacing: 8) {
@@ -78,10 +86,22 @@ struct ResultRow: View {
 
             Spacer()
 
-            if item.type == 1 && item.size > 0 {
-                Text(formatSize(item.size))
-                    .font(.subheadline)
-                    .foregroundColor(.secondary)
+            VStack(alignment: .trailing, spacing: 2) {
+                if options.showSize && item.type == 1 && item.size > 0 {
+                    Text(formatSize(item.size))
+                        .font(.subheadline)
+                        .foregroundColor(.secondary)
+                }
+                if options.showModified && item.modTime > 0 {
+                    Text(Self.dateFmt.string(from: Date(timeIntervalSince1970: TimeInterval(item.modTime))))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
+                if options.showCreated && item.birthTime > 0 {
+                    Text("✦ " + Self.dateFmt.string(from: Date(timeIntervalSince1970: TimeInterval(item.birthTime))))
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                }
             }
         }
         .padding(.vertical, 4)

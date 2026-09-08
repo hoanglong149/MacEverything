@@ -281,11 +281,11 @@ Môi trường: macOS Darwin 24.3.0, **5.4 triệu file index**, 48 loại truy 
 | Kỹ thuật | Hiệu quả |
 |------|------|
 | `getattrlistbulk` | 1 syscall lấy thuộc tính hàng loạt — khỏi `stat` từng file |
-| Index đảo Trigram | Tìm亚 tuyến tính: nhanh hơn quét tuyến tính 33x–308x |
+| Index đảo Trigram | Tìm gần tuyến tính: nhanh hơn quét tuyến tính 33x–308x |
 | Bố cục cột SoA | Truy cập thân thiện cache, truy vấn lọc thuần SIMD 16 record/lần |
 | `__builtin_prefetch` | Prefetch khoảng cách 8, giấu độ trễ RAM ở phase xác minh |
 | ARM NEON SIMD | So chuỗi vector 128-bit, unroll 2x, gần kịch băng thông RAM |
-| GCD quét song song | Trigram không加速 được thì dùng đa nhân quét tuyến tính |
+| GCD quét song song | Trigram không gánh được thì dùng đa nhân quét tuyến tính |
 | StringPool liền mạch | Tên file xếp gọn trong 1 buffer `char`, thân thiện SIMD |
 | Intern PathTable | Đường dẫn chỉ lưu `uint32` — triệu file tiết kiệm ~550MB |
 | Bộ đếm Generation | Mỗi 1024 vòng lặp check 1 lần, gõ nhanh hủy query cũ zero-cost |

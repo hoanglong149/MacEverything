@@ -216,6 +216,7 @@ make daemon
 
 ### Tổng quan kiến trúc
 
+```
 ┌─────────────────────────────────────┐
 │       Tầng app SwiftUI              │  Giao diện · ViewModel · MVVM
 ├─────────────────────────────────────┤

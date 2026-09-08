@@ -3,8 +3,9 @@ CXXFLAGS = -std=c++20 -O2 -Wall -Wextra
 FRAMEWORKS = -framework CoreServices
 CORE_SRCS = $(wildcard MacEverything/Core/*.cpp)
 RE2_PREFIX = /opt/homebrew/opt/re2
-RE2_CFLAGS = -I$(RE2_PREFIX)/include
-RE2_LDFLAGS = -L$(RE2_PREFIX)/lib -lre2
+ABSL_PREFIX = /opt/homebrew/opt/abseil
+RE2_CFLAGS = -I$(RE2_PREFIX)/include -I$(ABSL_PREFIX)/include
+RE2_LDFLAGS = -L$(RE2_PREFIX)/lib -lre2 -L$(ABSL_PREFIX)/lib -labsl_strings -labsl_status -labsl_statusor -labsl_base -labsl_synchronization -labsl_time
 
 # === Build targets ===
 .PHONY: test test-fast test-slow test-all test-asan test-tsan build clean app dmg daemon help

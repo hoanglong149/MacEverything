@@ -316,6 +316,8 @@ std::string HttpServer::route(const HttpRequest& req) {
             return handleContentSearch(req.query);
         } else if (req.path == "/api/recent") {
             return handleRecent(req.query);
+        } else if (req.path == "/api/suggest") {
+            return handleSuggest(req.query);
         } else if (req.path == "/api/status") {
             return handleStatus();
         } else if (req.path == "/api/health") {
@@ -358,6 +360,10 @@ std::string HttpServer::handleSearch(
         if (endptr != lIt->second.c_str() && v > 0) limit = static_cast<uint32_t>(std::min(v, 10000L));
     }
 
+    std::string scope;
+    auto sIt = params.find("scope");
+    if (sIt != params.end()) scope = sIt->second;
+
     bool useTrigram = true;
     auto tIt = params.find("trigram");
     if (tIt != params.end() && tIt->second == "0") {
@@ -369,7 +375,7 @@ std::string HttpServer::handleSearch(
 
     auto start = std::chrono::steady_clock::now();
     QueryTimingInfo timing;
-    auto indices = engine->query(keyword, limit, useTrigram, timing);
+    auto indices = engine->query(keyword, limit, useTrigram, timing, 0, scope);
 
     std::ostringstream json;
     json << "{\"results\":[";
@@ -411,6 +417,61 @@ std::string HttpServer::handleSearch(
          << ",\"searchPath\":\"" << timing.searchPath << "\""
          << "}}";
 
+    return jsonResponse(200, json.str());
+}
+
+std::string HttpServer::handleSuggest(
+        const std::unordered_map<std::string, std::string>& params) {
+    auto qIt = params.find("prefix");
+    if (qIt == params.end() || qIt->second.empty()) {
+        qIt = params.find("q");
+        if (qIt == params.end() || qIt->second.empty()) {
+            return errorResponse(400, "Missing required parameter: prefix");
+        }
+    }
+    const std::string& prefix = qIt->second;
+
+    uint32_t limit = 10;
+    auto lIt = params.find("limit");
+    if (lIt != params.end()) {
+        char* endptr = nullptr;
+        long v = std::strtol(lIt->second.c_str(), &endptr, 10);
+        if (endptr != lIt->second.c_str() && v > 0) limit = static_cast<uint32_t>(std::min(v, 100L));
+    }
+
+    std::string scope;
+    auto sIt = params.find("scope");
+    if (sIt != params.end()) scope = sIt->second;
+
+    auto engine = getEngine_();
+    if (!engine) return errorResponse(503, "Engine not available");
+
+    QueryTimingInfo timing;
+    auto indices = engine->suggest(prefix, limit, scope, timing);
+
+    std::ostringstream json;
+    json << "{\"results\":[";
+    bool first = true;
+    engine->forEachRecordWithPath(indices,
+        [&](uint32_t /*idx*/, const FileRecord& r, const std::string& dirPath) {
+            if (!first) json << ',';
+            first = false;
+            std::string fullPath = SearchEngine::makeFullPath(dirPath, r.name);
+            json << "{\"name\":\"" << jsonEscapeString(r.name) << "\""
+                 << ",\"path\":\"" << jsonEscapeString(fullPath) << "\""
+                 << ",\"type\":" << static_cast<int>(r.type)
+                 << ",\"size\":" << r.size
+                 << ",\"modTime\":" << r.modTime
+                 << "}";
+        });
+    json << std::fixed << std::setprecision(2);
+    json << "],\"count\":" << indices.size()
+         << ",\"timing\":{"
+         << "\"totalMs\":" << timing.totalMs
+         << ",\"totalRecords\":" << timing.totalRecords
+         << ",\"resultCount\":" << timing.resultCount
+         << ",\"searchPath\":\"" << timing.searchPath << "\""
+         << "}}";
     return jsonResponse(200, json.str());
 }
 

@@ -43,3 +43,34 @@ std::string toLower(const std::string& s) {
 }
 
 } // namespace me
+
+static std::string normalizeWithForm(const std::string& s, CFStringNormalizationForm form) {
+    if (s.empty()) return s;
+    CFStringRef cfStr = CFStringCreateWithBytes(kCFAllocatorDefault,
+        reinterpret_cast<const UInt8*>(s.data()), static_cast<CFIndex>(s.size()),
+        kCFStringEncodingUTF8, false);
+    if (!cfStr) return s;
+    CFMutableStringRef mutable_ = CFStringCreateMutableCopy(kCFAllocatorDefault, 0, cfStr);
+    CFRelease(cfStr);
+    CFStringNormalize(mutable_, form);
+    CFIndex len = CFStringGetLength(mutable_);
+    CFIndex maxBuf = CFStringGetMaximumSizeForEncoding(len, kCFStringEncodingUTF8) + 1;
+    std::string result(static_cast<size_t>(maxBuf), '\0');
+    Boolean ok = CFStringGetCString(mutable_, result.data(), maxBuf, kCFStringEncodingUTF8);
+    CFRelease(mutable_);
+    if (!ok) return s;
+    result.resize(std::strlen(result.c_str()));
+    return result;
+}
+
+namespace me {
+
+std::string normalizeNFC(const std::string& s) {
+    return normalizeWithForm(s, kCFStringNormalizationFormC);
+}
+
+std::string normalizeNFD(const std::string& s) {
+    return normalizeWithForm(s, kCFStringNormalizationFormD);
+}
+
+} // namespace me

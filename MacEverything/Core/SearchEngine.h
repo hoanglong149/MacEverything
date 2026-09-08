@@ -153,13 +153,21 @@ public:
     /// Case-insensitive substring search. Returns indices into the records array.
     /// If maxResults > 0, stops early once enough matches are found.
     /// If useTrigram is false, bypasses trigram index and does NEON full scan.
+    /// scope: optional case-insensitive full-path prefix ("" = whole index).
     std::vector<uint32_t> query(const std::string& keyword, uint32_t maxResults = 0,
-                                bool useTrigram = true, uint64_t sessionId = 0) const;
+                                bool useTrigram = true, uint64_t sessionId = 0,
+                                const std::string& scope = "") const;
 
     /// Same as query() but also populates timing breakdown.
     std::vector<uint32_t> query(const std::string& keyword, uint32_t maxResults,
                                 bool useTrigram, QueryTimingInfo& timing,
-                                uint64_t sessionId = 0) const;
+                                uint64_t sessionId = 0,
+                                const std::string& scope = "") const;
+
+    /// Prefix completions for typeahead: live names starting with prefix
+    /// (case-insensitive), ranked by recency. scope filters like query().
+    std::vector<uint32_t> suggest(const std::string& prefix, uint32_t maxResults,
+                                  const std::string& scope, QueryTimingInfo& timing) const;
 
     /// Advanced query: evaluate an AST with boolean operators, quoted phrases,
     /// and filter nodes. Uses trigram index for TERM nodes, then applies
@@ -414,6 +422,11 @@ private:
 
     /// Build trigram index from namePool_ (called inside loadRecords/compactRecords under lock)
     void buildTrigramIndex();
+    /// Keep only records whose lowercased full path starts with lowerScope + '/'.
+    /// Preserves input order; truncates to maxResults (0 = unlimited). Thread-safe.
+    std::vector<uint32_t> filterByScope(const std::vector<uint32_t>& indices,
+                                        const std::string& lowerScope,
+                                        uint32_t maxResults) const;
     /// Add trigrams for a single record to the index
     void addTrigramsForRecord(uint32_t idx, const char* data, uint16_t len);
     /// Remove trigrams for a single record from the index

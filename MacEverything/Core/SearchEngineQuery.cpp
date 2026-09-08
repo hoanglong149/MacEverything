@@ -179,14 +179,16 @@ static PreprocessedQuery preprocessQuery(const std::string& raw) {
 // ---------------------------------------------------------------------------
 
 std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t maxResults,
-                                          bool useTrigram, uint64_t sessionId) const {
+                                          bool useTrigram, uint64_t sessionId,
+                                          const std::string& scope) const {
     QueryTimingInfo unused;
-    return query(keyword, maxResults, useTrigram, unused, sessionId);
+    return query(keyword, maxResults, useTrigram, unused, sessionId, scope);
 }
 
 std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t maxResults,
                                           bool useTrigram, QueryTimingInfo& timing,
-                                          uint64_t sessionId) const {
+                                          uint64_t sessionId,
+                                          const std::string& scope) const {
     // Acquire per-session generation so only same-session queries cancel each other.
     auto [genAtom, myGen] = acquireSessionGeneration(sessionId);
 
@@ -194,6 +196,9 @@ std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t m
 
     auto pq = preprocessQuery(keyword);
     if (pq.original.empty()) return {};
+    // Scoped queries fetch unlimited, then filter + truncate (keeps ranking correct).
+    // DIR_LIST mode ignores scope (it is already directory-scoped).
+    uint32_t innerLimit = scope.empty() ? maxResults : 0;
 
     // Check for DIR_LIST mode: /path/* queries list directory children directly
     auto parsedQuery = parseQuery(pq.original, pq.lower);
@@ -222,7 +227,7 @@ std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t m
             return a.pathLen < b.pathLen;
         };
         size_t resultCount = merged.size();
-        if (maxResults > 0 && resultCount > maxResults) resultCount = maxResults;
+        if (innerLimit > 0 && resultCount > innerLimit) resultCount = innerLimit;
         if (resultCount < merged.size()) {
             std::partial_sort(merged.begin(), merged.begin() + resultCount, merged.end(), cmp);
         } else {
@@ -249,7 +254,9 @@ std::vector<uint32_t> SearchEngine::query(const std::string& keyword, uint32_t m
     }
 
     // All non-DIR_LIST queries go through the unified Advanced path
-    return queryAdvanced(pq.original, maxResults, useTrigram, timing, myGen, genAtom.get());
+    auto result = queryAdvanced(pq.original, innerLimit, useTrigram, timing, myGen, genAtom.get());
+    if (scope.empty() || result.empty()) return result;
+    return filterByScope(result, me::toLower(scope), maxResults);
 }
 
 // ---------------------------------------------------------------------------
@@ -277,4 +284,31 @@ void SearchEngine::cancelSession(uint64_t sessionId) const {
     if (it != sessionGenerations_.end()) {
         it->second->fetch_add(1, std::memory_order_relaxed);
     }
+}
+std::vector<uint32_t> SearchEngine::filterByScope(const std::vector<uint32_t>& indices,
+                                                  const std::string& lowerScope,
+                                                  uint32_t maxResults) const {
+    // Index bytes may be NFC or NFD (macOS stores either); accept both forms.
+    auto slashTerm = [](std::string s) {
+        while (!s.empty() && s.back() == '/') s.pop_back();
+        s.push_back('/');
+        return s;
+    };
+    const std::string nfc = slashTerm(me::normalizeNFC(lowerScope));
+    const std::string nfd = slashTerm(me::normalizeNFD(lowerScope));
+    std::vector<uint32_t> out;
+    out.reserve(std::min<size_t>(indices.size(), maxResults > 0 ? maxResults : indices.size()));
+    std::shared_lock lock(mutex_);
+    for (uint32_t idx : indices) {
+        if (idx >= types_.size() || types_[idx] == 0) continue;
+        if (idx >= pathIndices_.size()) continue;
+        std::string full = lowerPathPool_.str(pathIndices_[idx]);
+        full.push_back('/');
+        full += namePool_.str(idx);
+        if (full.compare(0, nfc.size(), nfc) != 0 &&
+            full.compare(0, nfd.size(), nfd) != 0) continue;
+        out.push_back(idx);
+        if (maxResults > 0 && out.size() >= maxResults) break;
+    }
+    return out;
 }

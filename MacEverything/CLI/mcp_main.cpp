@@ -313,8 +313,9 @@ static void sendToolResult(const std::string& id, const std::string& text, bool 
 
 static std::string toolDefinitions() {
     return R"JSON({"tools":[)JSON"
-        R"JSON({"name":"search_files","description":"Search for files and directories by name. Supports substring matching with trigram acceleration for fast results across millions of files.","inputSchema":{"type":"object","properties":{"query":{"type":"string","description":"Search keyword (substring match, case-insensitive)"},"limit":{"type":"integer","description":"Maximum number of results (default 100, max 10000)","default":100}},"required":["query"]},"annotations":{"readOnlyHint":true}},)JSON"
+        R"JSON({"name":"search_files","description":"Search for files and directories by name. Supports substring matching with trigram acceleration for fast results across millions of files. Pass scope to restrict to a directory subtree.","inputSchema":{"type":"object","properties":{"query":{"type":"string","description":"Search keyword (substring match, case-insensitive)"},"limit":{"type":"integer","description":"Maximum number of results (default 100, max 10000)","default":100},"scope":{"type":"string","description":"Optional directory prefix to search within (case-insensitive), e.g. /Users/mac/Documents"}},"required":["query"]},"annotations":{"readOnlyHint":true}},)JSON"
         R"JSON({"name":"search_content","description":"Full-text content search across indexed files. Returns matching file paths with context snippets.","inputSchema":{"type":"object","properties":{"query":{"type":"string","description":"Content search keyword"},"limit":{"type":"integer","description":"Maximum number of results (default 100, max 10000)","default":100}},"required":["query"]},"annotations":{"readOnlyHint":true}},)JSON"
+        R"JSON({"name":"suggest","description":"Typeahead filename completions: names starting with prefix, most recent first. Accepts optional scope directory.","inputSchema":{"type":"object","properties":{"prefix":{"type":"string","description":"Name prefix to complete"},"limit":{"type":"integer","description":"Maximum number of suggestions (default 10, max 100)","default":10},"scope":{"type":"string","description":"Optional directory prefix to restrict suggestions"}},"required":["prefix"]},"annotations":{"readOnlyHint":true}},)JSON"
         R"JSON({"name":"recent_files","description":"List recently modified files.","inputSchema":{"type":"object","properties":{"limit":{"type":"integer","description":"Maximum number of results (default 100, max 10000)","default":100}},"required":[]},"annotations":{"readOnlyHint":true}},)JSON"
         R"JSON({"name":"index_status","description":"Get the current index status including record count and content index stats.","inputSchema":{"type":"object","properties":{},"required":[]},"annotations":{"readOnlyHint":true}})JSON"
         R"JSON(]})JSON";
@@ -331,6 +332,23 @@ static std::string handleSearchFiles(const std::string& args) {
     long limit = jsonGetNumber(args, "limit");
     std::string path = "/api/search?q=" + urlEncode(query);
     if (limit > 0) path += "&limit=" + std::to_string(limit);
+    std::string scope = jsonGetString(args, "scope");
+    if (!scope.empty()) path += "&scope=" + urlEncode(scope);
+
+    auto resp = httpGet(path);
+    if (!resp.ok) return resp.body;
+    return resp.body;
+}
+
+static std::string handleSuggest(const std::string& args) {
+    std::string prefix = jsonGetString(args, "prefix");
+    if (prefix.empty()) return "Error: missing required parameter 'prefix'";
+
+    long limit = jsonGetNumber(args, "limit");
+    std::string path = "/api/suggest?prefix=" + urlEncode(prefix);
+    if (limit > 0) path += "&limit=" + std::to_string(limit);
+    std::string scope = jsonGetString(args, "scope");
+    if (!scope.empty()) path += "&scope=" + urlEncode(scope);
 
     auto resp = httpGet(path);
     if (!resp.ok) return resp.body;
@@ -421,6 +439,8 @@ static void handleRequest(const std::string& json) {
 
         if (toolName == "search_files") {
             resultText = handleSearchFiles(args);
+        } else if (toolName == "suggest") {
+            resultText = handleSuggest(args);
         } else if (toolName == "search_content") {
             resultText = handleSearchContent(args);
         } else if (toolName == "recent_files") {

@@ -56,6 +56,7 @@ private:
     std::string handleSearch(const std::unordered_map<std::string, std::string>& params);
     std::string handleContentSearch(const std::unordered_map<std::string, std::string>& params);
     std::string handleRecent(const std::unordered_map<std::string, std::string>& params);
+    std::string handleSuggest(const std::unordered_map<std::string, std::string>& params);
     std::string handleStatus();
     std::string handleHealth();
 
